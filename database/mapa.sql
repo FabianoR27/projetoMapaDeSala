@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 -- CRIANDO A TABELA DE CADASTRO DAS SALAS
-CREATE TABLE IF NOT EXISTS salas (
+CREATE TABLE IF NOT EXISTS tbl_sala (
 	codigo 		INT primary key,
     descricao	varchar(30) default '',
     andar		INT,
@@ -65,10 +65,13 @@ CREATE TABLE IF NOT EXISTS mapas(
     codigo_professor	INT default 0,
     estatus				char(01) default '',
     
-    foreign key (codigo_sala) references salas(codigo),
+    foreign key (codigo_sala) references tbl_sala(codigo),
     foreign key (codigo_horario) references horarios(codigo),
     foreign key (codigo_turma) references turmas(codigo),
     foreign key (codigo_professor) references professores(codigo)
 );
 
-select * from usuarios;
+select * from tbl_sala;
+
+
+

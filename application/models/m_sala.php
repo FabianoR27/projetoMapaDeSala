@@ -89,4 +89,3 @@ class M_sala extends CI_Model
         return $dados;
     }
 }
-?>
