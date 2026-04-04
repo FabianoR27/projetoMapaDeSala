@@ -2,7 +2,8 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 // função para verificar os parâmetros que estão vindo do Front-end
-function verificarParam($atributos, $lista) {
+function verificarParam($atributos, $lista)
+{
     // verificar se os elementos do Front-end estão nos atributos necessários
     foreach ($lista as $key => $value) {
         if (array_key_exists($key, get_object_vars($atributos))) {
@@ -22,42 +23,43 @@ function verificarParam($atributos, $lista) {
 }
 
 // função para verificar os tipos de dados que estão vindo do Front-end
-function validarDados($valor, $tipo, $tamanhoZero = true) {
+function validarDados($valor, $tipo, $tamanhoZero = true)
+{
 
     // verfica vazio ou nulo
     if (is_null($valor) || $valor === '') {
-            return array ('codigoHelper' => 2, 'msg' => 'Conteúdo nulo ou vazio.');
+        return array('codigoHelper' => 2, 'msg' => 'Conteúdo nulo ou vazio.');
     }
 
     // se considerar zero como vazio
     if ($tamanhoZero && ($valor === 0 || $valor === '0')) {
-        return array ('codigoHelper' => 3, 'msg' => 'Conteúdo zerado.');
+        return array('codigoHelper' => 3, 'msg' => 'Conteúdo zerado.');
     }
 
     switch ($tipo) {
         case 'int':
             // filtra como inteiro, aceita 123 e '123'
             if (filter_var($valor, FILTER_VALIDATE_INT) === false) {
-                return array ('codigoHelper' => 4, 'msg' => 'Valor não é um inteiro válido.');
+                return array('codigoHelper' => 4, 'msg' => 'Valor não é um inteiro válido.');
             }
             break;
 
-        case 'string': 
+        case 'string':
             // garante que é string não vazia após o trim
             if (!is_string($valor) || trim($valor) === '') {
-                return array ('codigoHelper' => 5, 'msg' => 'Valor não é um texto válido.');
+                return array('codigoHelper' => 5, 'msg' => 'Valor não é um texto válido.');
             }
             break;
 
         case 'date':
             // verifica o padrão da data
-            if(!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $match)) {
-                return array ('codigoHelper' => 6, 'msg' => 'Data em formato inválido.');
+            if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $match)) {
+                return array('codigoHelper' => 6, 'msg' => 'Data em formato inválido.');
             } else {
                 // tenta criar DataTime no formato Y-m-d
                 $d = DateTime::createFromFormat('Y-m-d', $valor);
-                if (($d ->format('Y-m-d') !== $valor) == false) {
-                    return array ('codigoHelper' => 6, 'msg' => 'Data em formato inválido.');
+                if (($d->format('Y-m-d') !== $valor) == false) {
+                    return array('codigoHelper' => 6, 'msg' => 'Data em formato inválido.');
                 }
             }
             break;
@@ -65,22 +67,23 @@ function validarDados($valor, $tipo, $tamanhoZero = true) {
         case 'hora':
             // verifica se tem padrão de hora
             if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $valor)) {
-                return array ('codigoHelper' => 7, 'msg' => 'Hora em formato inválido.');
+                return array('codigoHelper' => 7, 'msg' => 'Hora em formato inválido.');
             }
             break;
-        
-            default:
-            return array ('codigoHelper' => 0, 'msg' => 'Tipo de dado não definido.');
+
+        default:
+            return array('codigoHelper' => 0, 'msg' => 'Tipo de dado não definido.');
     }
 
     // Valor default da variável $retorno, caso não ocorra erro
-    return array ('codigoHelper' => 1, 'msg' => 'Validação correta.');
+    return array('codigoHelper' => 1, 'msg' => 'Validação correta.');
 }
 
 /**
  * Função para verificar os tipos de dados para Consulta
  */
-function validarDadosConsulta($valor, $tipo) {
+function validarDadosConsulta($valor, $tipo)
+{
 
     if ($valor != '') {
         switch ($tipo) {
@@ -98,19 +101,19 @@ function validarDadosConsulta($valor, $tipo) {
                 break;
             case 'date':
                 // Verifico se tem padrão de data
-                if(!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $match)){
+                if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $match)) {
                     return array('codigoHelper' => 6, 'msg' => 'Data em formato inválido.');
-                }else{
+                } else {
                     // Tenta criar DateTime no formato Y-m-d
                     $d = DateTime::createFromFormat('Y-m-d', $valor);
-                    if(($d && $d->format('Y-m-d') === $valor) == false ){
+                    if (($d && $d->format('Y-m-d') === $valor) == false) {
                         return array('codigoHelper' => 6, 'msg' => 'Data inválida.');
                     }
                 }
                 break;
             case 'hora':
                 // Verifico se tem padrão de hora
-                if(!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $valor)){
+                if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $valor)) {
                     return array('codigoHelper' => 7, 'msg' => 'Hora em formato inválido.');
                 }
                 break;
@@ -121,4 +124,28 @@ function validarDadosConsulta($valor, $tipo) {
     // Valor default da variável $retorno caso não ocorra erro
     return array('codigoHelper' => 0, 'msg' => 'Validação correta.');
 }
+// Função para verificar se datas ou horários são maiores entre si
+function compararDataHora($valorInicial, $valorFinal, $tipo)
+{
+    // passamos a string para hora
+    $valorInicial = strtotime($valorInicial);
+    $valorFinal = strtotime($valorFinal);
 
+    if ($valorInicial != '' && $valorFinal != '') {
+        switch ($tipo) {
+            case 'hora':
+                return array('codigoHelper' => 13, 'msg' => 'Hora inicial é maior que a hora final.');
+                break;
+            case 'data':
+                return array('codigoHelper' => 14, 'msg' => 'Data inicial é maior que a data final.');
+                break;
+            default:
+                return array('codigoHelper' => 97, 'msg' => 'Tipo de comparação não definido.');
+        }
+    }
+
+    // Valor default da variável $retorno caso não ocorra erro
+    return array('codigoHelper' => 0, 'msg' => 'Validação correta.');
+}
+
+?>

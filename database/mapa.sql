@@ -2,76 +2,74 @@
 CREATE DATABASE IF NOT EXISTS mapa DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- Usando o banco de dados
-use mapa;
+USE mapa;
 
 -- CRIANDO A TABELA DE USUARIOS
 CREATE TABLE IF NOT EXISTS usuarios (
-	id_usuario INT not null auto_increment primary key,
-	nome 	   varchar(50),
-	usuario    varchar(15),
-	senha      varchar(32),
-	email      varchar(80),
-	dt_criacao datetime default now(),
-	estatus    char(01) default ''
+    codigo INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nome            VARCHAR(50),
+    usuario         VARCHAR(15),
+    senha           VARCHAR(32),
+    email           VARCHAR(80),
+    data_criacao    DATETIME DEFAULT now(),
+    status          CHAR(2) DEFAULT ''
 );
 
 -- CRIANDO A TABELA DE CADASTRO DAS SALAS
-CREATE TABLE IF NOT EXISTS tbl_sala (
-	codigo 		INT primary key,
-    descricao	varchar(30) default '',
-    andar		INT,
-    capacidade	INT,
-    dt_criacao  datetime default now(),
-    estatus		char(01) default ''
+CREATE TABLE IF NOT EXISTS salas (
+    codigo          INT PRIMARY KEY,
+    descricao       VARCHAR(30) DEFAULT '',
+    andar           INT,
+    capacidade      INT,
+    data_criacao    DATETIME DEFAULT now(),
+    status          CHAR(2) DEFAULT ''
 );
 
 -- CRIANDO A TABELA DE CADASTRO DE PROFESSORES
-CREATE TABLE IF NOT EXISTS professores(
-	codigo 		INT auto_increment primary key,
-	nome		varchar(30) default '',
-	cpf			varchar(11) default '',
-	tipo		char(1) default 'F',
-	dt_criacao	datetime default now(),
-	estatus		char(01) default ''
+CREATE TABLE IF NOT EXISTS professores (
+    codigo          INT AUTO_INCREMENT PRIMARY KEY,
+    nome            VARCHAR(30) DEFAULT '',
+    cpf             VARCHAR(11) DEFAULT '',
+    tipo            CHAR(1) DEFAULT 'F',
+    data_criacao    DATETIME DEFAULT now(),
+    status          CHAR(2) DEFAULT ''
 );
 
 -- CRIANDO A TABELA DE CADASTRO DAS TURMAS
 CREATE TABLE IF NOT EXISTS turmas(
-	codigo		INT auto_increment primary key,
-    descricao	varchar(50) default '',
-    capacidade	INT default 0,
-    dt_inicio	date,
-	dt_criacao	datetime default now(),
-    estatus		char(01) default ''
+    codigo          INT AUTO_INCREMENT PRIMARY KEY,
+    descricao       VARCHAR(50) DEFAULT '',
+    capacidade      INT DEFAULT 0,
+    dt_inicio       DATE,
+    data_criacao    DATETIME DEFAULT now(),
+    status          CHAR(2) DEFAULT ''
 );
 
 -- CRIANDO A TABELA DE CADASTRO DOS HORARIOS
 CREATE TABLE IF NOT EXISTS horarios(
-	codigo		INT auto_increment primary key,
-    descricao	varchar(50) default '',
-    hora_inicio	time,
-    hora_fim	time,
-    dt_criacao	datetime default now(),
-    estatus		char(010) default ''
+    codigo          INT AUTO_INCREMENT PRIMARY KEY,
+    descricao       VARCHAR(50) DEFAULT '',
+    hora_inicial     TIME,
+    hora_final        TIME,
+    data_criacao    DATETIME DEFAULT now(),
+    status          CHAR(2) DEFAULT ''
 );
 
 -- CRIANDO TABELA DE MAPEAMENTO DE SALAS
 CREATE TABLE IF NOT EXISTS mapas(
-	codigo				INT auto_increment primary key,
-    dt_reserva			date,
-	codigo_sala         INT default 0,
-    codigo_horario		INT default 0,
-    codigo_turma		INT default 0,
-    codigo_professor	INT default 0,
-    estatus				char(01) default '',
+	codigo          INT AUTO_INCREMENT PRIMARY KEY,
+    dt_reserva      DATE,
+	codigo_sala     INT DEFAULT 0,
+    codigo_horario  INT DEFAULT 0,
+    codigo_turma    INT DEFAULT 0,
+    codigo_professor    INT DEFAULT 0,
+    status              CHAR(2) DEFAULT '',
     
-    foreign key (codigo_sala) references tbl_sala(codigo),
-    foreign key (codigo_horario) references horarios(codigo),
-    foreign key (codigo_turma) references turmas(codigo),
-    foreign key (codigo_professor) references professores(codigo)
+    FOREIGN KEY (codigo_sala) references salas(codigo),
+    FOREIGN KEY (codigo_horario) references horarios(codigo),
+    FOREIGN KEY (codigo_turma) references turmas(codigo),
+    FOREIGN KEY (codigo_professor) references professores(codigo)
 );
 
-select * from tbl_sala;
-
-
+select * from salas;
 

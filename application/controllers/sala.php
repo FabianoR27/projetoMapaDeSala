@@ -1,8 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Sala extends CI_Controller
-{
+class Sala extends CI_Controller {
 
     /*
     Validação dos tipos de retornos nas validações (Código de erro)
@@ -22,7 +21,7 @@ class Sala extends CI_Controller
     private $descricao;
     private $andar;
     private $capacidade;
-    private $estatus;
+    private $status;
 
     //Getters dos atributos
     public function getCodigo()
@@ -45,9 +44,9 @@ class Sala extends CI_Controller
         return $this->capacidade;
     }
 
-    public function getEstatus()
+    public function getStatus()
     {
-        return $this->estatus;
+        return $this->status;
     }
 
     //Setters dos atributos
@@ -71,9 +70,9 @@ class Sala extends CI_Controller
         $this->capacidade = $capacidadeFront;
     }
 
-    public function setEstatus($estatusFront)
+    public function setStatus($statusFront)
     {
-        $this->tipoUsuario = $estatusFront;
+        $this->status = $statusFront;
     }
 
     public function inserir()

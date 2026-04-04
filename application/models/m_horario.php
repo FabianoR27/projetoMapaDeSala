@@ -1,38 +1,39 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class M_sala extends CI_Model {
+class m_horario extends CI_Model {
     /*
     Validação dos tipos de retornos nas validações (Código de erro)
     0 - Erro de exceção
     1 - Operação realizada no banco de dados com sucesso (Inserção, Alteração, Consulta ou Exclusão)
     8 - Houve algum problema de inserção, atualização, consulta ou exclusão
-    9 - Sala desativada no sistema
-    10 - Sala já cadastrada
+    9 - Horário desativado no sistema
+    10 - Horario já cadastrada
     98 - Método auxiliar de consulta que não trouxe dados
     */
 
-    public function inserir($codigo, $descricao, $andar, $capacidade) {
+    public function inserir($descricao, $horaInicial, $horaFinal) {
         try {
-            // Verifico se a sala já está cadastrada
-            $retornoConsulta = $this->consultaSala($codigo);
+            // Verifica se o horário já está cadastrada
+            $retornoConsulta = $this->consultarHorario('', $horaInicial, $horaFinal);
 
-            // Se a sala não estiver desativada (9) e não estiver cadastrada (10)
+            // Se o horário não estiver desativada (9) e não estiver cadastrada (10)
             if ($retornoConsulta['codigo'] != 9 && $retornoConsulta['codigo'] != 10) {
+
                 // Query de inserção dos dados
-                $this->db->query("insert into salas (codigo, descricao, andar, capacidade) 
-                                values ($codigo, '$descricao', $andar, $capacidade)");
+                $this->db->query("insert into horarios (descricao, hora_inicial, hora_final) 
+                                values ('$descricao', '$horaInicial', '$horaFinal')");
 
                 // Verificar se a inserção ocorreu com sucesso
                 if ($this->db->affected_rows() > 0) {
                     $dados = array(
                         'codigo' => 1,
-                        'msg' => 'Sala cadastrada corretamente'
+                        'msg' => 'Horário cadastrado corretamente'
                     );
                 } else {
                     $dados = array(
                         'codigo' => 8,
-                        'msg' => 'Houve algum problema na inserção na tabela de salas.'
+                        'msg' => 'Houve algum problema na inserção na tabela de Horários.'
                     );
                 }
             } else {
@@ -52,61 +53,68 @@ class M_sala extends CI_Model {
     }
 
     // Método privado, pois será auxiliar nesta classe
-    private function consultaSala ($codigo){
+    private function consultarHorario ($codigo, $horaInicial, $horaFinal){
         try {
             // Query para consultar dados de acordo com parâmetros passados
-            $sql = "select * from salas where codigo = $codigo ";
-            $retornoSala = $this->db->query($sql);
+            //$sql = "select * from horarios where codigo = $codigo ";
+            if ($codigo != '') {
+                $sql = "select * from horarios where codigo = $codigo ";
+            } else {
+                $sql = "select * from horarios where hora_inicial = '$horaInicial' and hora_final = '$horaFinal' ";
+            }
+            $retornoHorario = $this->db->query($sql);
 
             // Verificar se a consulta ocorreu com sucesso
-            if ($retornoSala->num_rows() > 0) {
-                $linha = $retornoSala->row();
+            if ($retornoHorario->num_rows() > 0) {
+                $linha = $retornoHorario->row();
                 if (trim($linha->status) == "D") {
                     $dados = array(
                         'codigo' => 9,
-                        'msg' => 'Sala desativada no sistema, caso precise reativar a mesma, fale com o administrador.'
+                        'msg' => 'Horário desativado no sistema, caso precise reativar, fale com o administrador.'
                     );
                 } else {
                     $dados = array(
                         'codigo' => 10,
-                        'msg' => 'Sala já cadastrada no sistema.'
+                        'msg' => 'Horário já cadastrado no sistema.'
                     );
                 }
             } else {
                 $dados = array(
                     'codigo' => 98,
-                    'msg' => 'Sala não encontrada.'
+                    'msg' => 'Horário não encontrado.'
                 );
             }
-        } catch (Exception $e) {
+        } 
+        
+        catch (Exception $e) {
             $dados = array(
                 'codigo' => 0,
                 'msg' => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
             );
         }
-        // Envia o array $dados com as informações tratadas
+        // Envia o array $dados com as informações tratadas acima
         return $dados;
     }
 
 
-    public function consultar ($codigo, $descricao, $andar, $capacidade) {
+    public function consultar ($codigo, $descricao, $horaInicial, $horaFinal) {
         try {
             // Query para consultar dados de acordo com os parâmetros passados
-            $sql = "select * from salas where status = '' ";
+            $sql = "select * from horarios where status = '' ";
             if (trim($codigo) != "") {
                 $sql = $sql . "and codigo = $codigo ";
-            }
-
-            if (trim($andar) != '') {
-                $sql = $sql . "and andar = '$andar' ";
             }
 
             if (trim($descricao) != '') {
                 $sql = $sql . "and descricao like '%$descricao%' ";
             }
 
-            if (trim($capacidade) != '') {
-                $sql = $sql . "and capacidade = '$capacidade' ";
+            if (trim($horaInicial) != '') {
+                $sql = $sql . "and hora_inicial = '$horaInicial' ";
+            }
+
+            if (trim($horaFinal) != '') {
+                $sql = $sql . "and hora_final = '$horaFinal' ";
             }
 
             $sql = $sql . "order by codigo";
@@ -123,7 +131,7 @@ class M_sala extends CI_Model {
             } else {
                 $dados = array(
                     'codigo' => 11,
-                    'msg' => 'Nenhuma sala encontrada com os parâmetros informados.'
+                    'msg' => 'Nenhuma Horario encontrada com os parâmetros informados.'
                 );
             }
         }
@@ -139,27 +147,27 @@ class M_sala extends CI_Model {
         return $dados;
     }
 
-    // método para montar a sala de forma dinâmica, ou seja, de acordo com os parâmetros passados pela controller
-    public function alterar ($codigo, $descricao, $andar, $capacidade) {
+    // método para montar a Horario de forma dinâmica, ou seja, de acordo com os parâmetros passados pela controller
+    public function alterar ($codigo, $descricao, $horaInicial, $horaFinal) {
         try {
-            // verifica se a sala já existe no sistema
-            $retornoConsulta = $this->consultaSala($codigo);
+            // verifica se a Horario já existe no sistema
+            $retornoConsulta = $this->consultarHorario($codigo, '', '', '');
 
             if ($retornoConsulta['codigo'] == 10) {
                 // início dda query de atualização dos dados
-                $query = "update salas set ";
+                $query = "update horarios set ";
 
                 // comparando os itens para montar a query de forma dinâmica
                 if ($descricao !== '') {
                     $query .=  "descricao = '$descricao', ";
                 }
 
-                if ($andar !== '') {
-                    $query .= "andar = '$andar', ";
+                if ($horaInicial !== '') {
+                    $query .= "hora_inicial = '$horaInicial', ";
                 }
 
-                if ($capacidade !== '') {
-                    $query .= "capacidade = '$capacidade', ";
+                if ($horaFinal !== '') {
+                    $query .= "hora_final = '$horaFinal', ";
                 }
 
                 // término da concatenação da query, retirando a última vírgula e adicionando a cláusula where
@@ -172,12 +180,12 @@ class M_sala extends CI_Model {
                 if ($this->db->affected_rows() > 0) {
                     $dados = array (
                         'codigo' => 1,
-                        'msg' => 'Sala atualizada corretamente.'
+                        'msg' => 'Horario atualizada corretamente.'
                     );
                 } else {
                     $dados = array (
                         'codigo' => 8,
-                        'msg' => 'Houve algum problema na atualização da tabela de salas.'
+                        'msg' => 'Houve algum problema na atualização da tabela de Horarios.'
                     );
                 }
             } else {
@@ -199,26 +207,26 @@ class M_sala extends CI_Model {
         return $dados;
     }
 
-    // método para desativar a sala, ou seja, não excluir a sala do banco de dados, apenas marcar a mesma como desativada
+    // método para desativar a Horario, ou seja, não excluir a Horario do banco de dados, apenas marcar a mesma como desativada
     public function desativar ($codigo) {
         try {
-            // verifica se a sala já existe no sistema
-            $retornoConsulta = $this->consultaSala($codigo);
+            // verifica se a Horario já existe no sistema
+            $retornoConsulta = $this->consultarHorario($codigo, '', '');
 
             if ($retornoConsulta['codigo'] == 10) {
-                // query para desativar a sala
-                $this->db->query("update salas set status = 'D' where codigo = $codigo");
+                // query para desativar a Horario
+                $this->db->query("update horarios set status = 'D' where codigo = $codigo");
 
                 // verificar se a desativação ocorreu com sucesso
                 if ($this->db->affected_rows() > 0) {
                     $dados = array (
                         'codigo' => 1,
-                        'msg' => 'Sala desativada corretamente.'
+                        'msg' => 'Horário desativado corretamente.'
                     );
                 } else {
                     $dados = array (
                         'codigo' => 8,
-                        'msg' => 'Houve algum problema na desativação da sala.'
+                        'msg' => 'Houve algum problema na desativação do Horário.'
                     );
                 }
             } else {
