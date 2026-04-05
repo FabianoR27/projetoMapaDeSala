@@ -119,8 +119,8 @@ class Sala extends CI_Controller {
                     $this->setDescricao($resultado->descricao);
                     $this->setAndar($resultado->andar);
                     $this->setCapacidade($resultado->capacidade);
-                    $this->load->model('M_sala');
-                    $resBanco = $this->M_sala->inserir(
+                    $this->load->model('m_sala');
+                    $resBanco = $this->m_sala->inserir(
                         $this->getCodigo(),
                         $this->getDescricao(),
                         $this->getAndar(),
@@ -220,8 +220,8 @@ class Sala extends CI_Controller {
                     $this->setAndar($resultado->andar);
                     $this->setCapacidade($resultado->capacidade);
 
-                    $this->load->model('M_sala');
-                    $resBanco = $this->M_sala->consultar(
+                    $this->load->model('m_sala');
+                    $resBanco = $this->m_sala->consultar(
                         $this->getCodigo(),
                         $this->getDescricao(),
                         $this->getAndar(),
@@ -280,7 +280,7 @@ class Sala extends CI_Controller {
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
                 // pelo menos um dos três parâmetros precisa ser passado para acontecer a atualização
-                if (trim($resultado -> descricao) == '' && trim($resultado -> andar) == '' && trim($resultado -> capacidae) == '') {
+                if (trim($resultado -> descricao) == '' && trim($resultado -> andar) == '' && trim($resultado -> capacidade) == '') {
                     $erros[] = ['codigo' => 12, 'msg' => 'Pelo menos um campo precisa ser informado para atualização.'];
                 } else {
                     // validar campos quanto ao tipo de dado e tamanho (helper)
@@ -289,8 +289,8 @@ class Sala extends CI_Controller {
                     $retornoAndar = validarDadosConsulta($resultado -> andar, 'int');
                     $retornoCapacidade = validarDadosConsulta($resultado -> capacidade, 'int');
 
-                    if ($retornoCodigo['codigoHelper'] != 0) {
-                        $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Codigo', 'msg' => $retornoCodigo['msg']];
+                    if ($retornoCodigo['codigoHelper'] != 1) {
+                        $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Código', 'msg' => $retornoCodigo['msg']];
                     }
 
                     if ($retornoDescricao['codigoHelper'] != 0) {
@@ -365,7 +365,7 @@ class Sala extends CI_Controller {
                 // validar campos quanto ao tipo de dado e tamanho (helper)
                 $retornoCodigo = validarDados($resultado -> codigo, 'int', true);
 
-                if ($retornoCodigo['codigoHelper'] != 0) {
+                if ($retornoCodigo['codigoHelper'] != 1) {
                     $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Codigo', 'msg' => $retornoCodigo['msg']];
                 }
 

@@ -170,10 +170,10 @@ class M_sala extends CI_Model {
 
                 // verificar se a atualização ocorreu com sucesso
                 if ($this->db->affected_rows() > 0) {
-                    $dados = array (
+                    $dados = [
                         'codigo' => 1,
                         'msg' => 'Sala atualizada corretamente.'
-                    );
+                    ];
                 } else {
                     $dados = array (
                         'codigo' => 8,

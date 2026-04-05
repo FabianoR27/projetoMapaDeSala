@@ -98,12 +98,12 @@ class Horario extends CI_Controller
                 $erros = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no Front-end.'];
             } else {
                 // validar campos quanto ao tipo de dado e tamanho (Helper)
-                $retornoDescricao = validarDados($resultado->descricao, 'string', true);
+                $retornoDescricao = validarDados($resultado->descricao, 'string', true); // o campo descrição é obrigatório para a inserção, por isso o true
                 $retornoHoraInicial = validarDados($resultado->horaInicial, 'hora', true);
                 $retornoHoraFinal = validarDados($resultado->horaFinal, 'hora', true);
                 $retornoComparacaoHora = compararDataHora($resultado->horaInicial, $resultado->horaFinal, 'hora');
 
-                if ($retornoDescricao['codigoHelper'] != 0) {
+                if ($retornoDescricao['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoDescricao['codigoHelper'],
                         'campo' => 'Descrição',
@@ -111,7 +111,7 @@ class Horario extends CI_Controller
                     ];
                 }
 
-                if ($retornoHoraInicial['codigoHelper'] != 0) {
+                if ($retornoHoraInicial['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoHoraInicial['codigoHelper'],
                         'campo' => 'Hora Inicial',
@@ -119,7 +119,7 @@ class Horario extends CI_Controller
                     ];
                 }
 
-                if ($retornoHoraFinal['codigoHelper'] != 0) {
+                if ($retornoHoraFinal['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoHoraFinal['codigoHelper'],
                         'campo' => 'Hora Final',
@@ -128,7 +128,7 @@ class Horario extends CI_Controller
                 }
 
                 // validar se a hora inicial é menor que a hora final
-                if ($retornoComparacaoHora['codigoHelper'] != 0) {
+                if ($retornoComparacaoHora['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoComparacaoHora['codigoHelper'],
                         'campo' => 'Hora inicial e Hora final',
@@ -143,7 +143,7 @@ class Horario extends CI_Controller
                     $this->setHoraFinal($resultado->horaFinal);
 
                     $this->load->model('m_horario');
-                    $resBanco = $this->m_horario->inserir($this);
+                    $resBanco = $this->m_horario->inserir($this->descricao, $this->horaInicial, $this->horaFinal);
 
                     if ($resBanco['codigo'] == 1) {
                         $sucesso = true;
@@ -169,112 +169,82 @@ class Horario extends CI_Controller
     }
 
     // método para consultar
-    public function consultar()
-    {
-        // atributos para contnrolar o status de nosso método
+    public function consultar() {
         $erros = [];
         $sucesso = false;
-
+    
         try {
-            $json  = file_get_contents('php://input');
+            $json = file_get_contents('php://input');
             $resultado = json_decode($json);
-            $lista = [
-                "codigo" => "0",
-                "descricao" => "0",
-                "horaInicial" => "0",
-                "horaFinal" => "0"
-            ];
-
-            if (verificarParam($resultado, $lista) != 1) {
-                // Validar os dados vindo do front-end (helper)
-                $erros = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no Front-end.'];
+    
+            // 1. Defina o que é OBRIGATÓRIO. 
+            // Se a consulta pode ser feita só com código, a lista de verificação deve ser flexível.
+            if (!isset($resultado->codigo) && !isset($resultado->descricao)) {
+                $erros[] = ['codigo' => 99, 'msg' => 'Informe ao menos um critério de busca (Código ou Descrição).'];
             } else {
-                // validar campos quanto ao tipo de dado e tamanho (Helper)
-                $retornoCodigo = validarDados($resultado->codigo, 'int', false); // o código é opcional para a consulta, por isso o false
-                $retornoDescricao = validarDados($resultado->descricao, 'string', false);
-                $retornoHoraInicial = validarDados($resultado->horaInicial, 'hora', false);
-                $retornoHoraFinal = validarDados($resultado->horaFinal, 'hora', false);
-                $retornoComparacaoHora = compararDataHora($resultado->horaInicial, $resultado->horaFinal, 'hora');
-
-                if ($retornoCodigo['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoCodigo['codigoHelper'],
-                        'campo' => 'Código',
-                        'msg' => $retornoCodigo['msg']
-                    ];
-                } // Se o código for passado, os outros campos não podem ser passados
-
-                if ($retornoDescricao['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoDescricao['codigoHelper'],
-                        'campo' => 'Descrição',
-                        'msg' => $retornoDescricao['msg']
-                    ];
+                
+                // --- VALIDAÇÃO DO CÓDIGO ---
+                // Só valida se o código foi enviado e não está vazio
+                if (!empty($resultado->codigo)) {
+                    $retornoCodigo = validarDados($resultado->codigo, 'int', false);
+                    if ($retornoCodigo['codigoHelper'] != 1) {
+                        $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Código', 'msg' => $retornoCodigo['msg']];
+                    }
                 }
-
-                if ($retornoHoraInicial['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoHoraInicial['codigoHelper'],
-                        'campo' => 'Hora Inicial',
-                        'msg' => $retornoHoraInicial['msg']
-                    ];
+    
+                // --- VALIDAÇÃO DA DESCRIÇÃO ---
+                if (!empty($resultado->descricao)) {
+                    $retornoDescricao = validarDados($resultado->descricao, 'string', false);
+                    if ($retornoDescricao['codigoHelper'] != 1) { // Ajustado para != 1 (sucesso)
+                        $erros[] = ['codigo' => $retornoDescricao['codigoHelper'], 'campo' => 'Descrição', 'msg' => $retornoDescricao['msg']];
+                    }
                 }
-
-                if ($retornoHoraFinal['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoHoraFinal['codigoHelper'],
-                        'campo' => 'Hora Final',
-                        'msg' => $retornoHoraFinal['msg']
-                    ];
+    
+                // --- VALIDAÇÃO DE HORAS (Só se ambas forem preenchidas) ---
+                if (!empty($resultado->horaInicial) && !empty($resultado->horaFinal)) {
+                    $retornoHoraInicial = validarDados($resultado->horaInicial, 'hora', false);
+                    $retornoHoraFinal = validarDados($resultado->horaFinal, 'hora', false);
+                    $retornoComparacao = compararDataHora($resultado->horaInicial, $resultado->horaFinal, 'hora');
+    
+                    if ($retornoComparacao['codigoHelper'] != 1) {
+                        $erros[] = ['codigo' => $retornoComparacao['codigoHelper'], 'campo' => 'Horário', 'msg' => $retornoComparacao['msg']];
+                    }
                 }
-
-                // validar se a hora inicial é maior que a hora final
-                if ($retornoComparacaoHora['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoComparacaoHora['codigoHelper'],
-                        'campo' => 'Horário inicial e Horário final',
-                        'msg' => $retornoComparacaoHora['msg']
-                    ];
-                }
-
-                // se não tiver erros, pode consultar no banco de dados
+    
+                // Se não houver erros de validação, prossegue
                 if (empty($erros)) {
-                    $this->setCodigo($resultado->codigo);
-                    $this->setDescricao($resultado->descricao);
-                    $this->setHoraInicial($resultado->horaInicial);
-                    $this->setHoraFinal($resultado->horaFinal);
-
+                    // Prepara os dados (se não existir no JSON, envia null ou vazio para o Model)
+                    $codigo    = $resultado->codigo ?? null;
+                    $descricao = $resultado->descricao ?? null;
+                    $horaIni   = $resultado->horaInicial ?? null;
+                    $horaFim   = $resultado->horaFinal ?? null;
+    
                     $this->load->model('m_horario');
-                    $resBanco = $this->m_horario->consultar($this->getCodigo(), $this->getDescricao(), $this->getHoraInicial(), $this->getHoraFinal());
-
+                    $resBanco = $this->m_horario->consultar($codigo, $descricao, $horaIni, $horaFim);
+    
                     if ($resBanco['codigo'] == 1) {
                         $sucesso = true;
                         $dadosConsulta = $resBanco['dados'];
                     } else {
-                        // captura o erro do banco de dados e retorna para o front-end
                         $erros[] = ['codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
                     }
                 }
             }
         } catch (Exception $e) {
-            $erros[] = 'Erro inesperado: ' . $e->getMessage();
+            $erros[] = ['codigo' => 500, 'msg' => 'Erro inesperado: ' . $e->getMessage()];
         }
-
+    
         // RETORNO PARA O FRONT-END
-        if ($sucesso) {
-            $retorno = ['sucesso' => $sucesso, 'codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg'], 'dados' => $dadosConsulta];
-        } else {
-            $retorno = ['sucesso' => $sucesso, 'erros' => $erros];
-        }
-
-        // transforma o array em JSON e retorna para o front-end
+        $retorno = $sucesso 
+            ? ['sucesso' => true, 'codigo' => 1, 'msg' => 'Consulta realizada.', 'dados' => $dadosConsulta]
+            : ['sucesso' => false, 'erros' => $erros];
+    
         echo json_encode($retorno);
     }
 
 
     // método para atualizar
-    public function alterar()
-    {
+    public function alterar() {
         //Atributos para controlar o status de nosso método
         $erros = [];
         $sucesso = false;
@@ -307,13 +277,9 @@ class Horario extends CI_Controller
                     $retornoDescricao = validarDadosConsulta($resultado->descricao, 'string');
                     $retornoHoraInicial = validarDadosConsulta($resultado->horaInicial, 'hora');
                     $retornoHoraFinal = validarDadosConsulta($resultado->horaFinal, 'hora');
-                    $retornoComparacaoHoras = compararDataHora(
-                        $resultado->horaInicial,
-                        $resultado->horaFinal,
-                        'hora'
-                    );
+                    $retornoComparacaoHoras = compararDataHora($resultado->horaInicial, $resultado->horaFinal, 'hora');
 
-                    if ($retornoCodigo['codigoHelper'] != 0) {
+                    if ($retornoCodigo['codigoHelper'] != 1) {
                         $erros[] = [
                             'codigo' => $retornoCodigo['codigoHelper'],
                             'campo' => 'Codigo',
@@ -346,7 +312,7 @@ class Horario extends CI_Controller
                     }
 
                     // Validar se a hora inicial é maior que a hora final
-                    if ($retornoComparacaoHoras['codigoHelper'] != 0) {
+                    if ($retornoComparacaoHoras['codigoHelper'] != 1) {
                         $erros[] = [
                             'codigo' => $retornoComparacaoHoras['codigoHelper'],
                             'campo' => 'Hora Inicial e Hora Final',
@@ -420,7 +386,7 @@ class Horario extends CI_Controller
                 // Validar campos quanto ao tipo de dado e tamanho (Helper)
                 $retornoCodigo = validarDados($resultado->codigo, 'int', true);
 
-                if ($retornoCodigo['codigoHelper'] != 0) {
+                if ($retornoCodigo['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoCodigo['codigoHelper'],
                         'campo' => 'Codigo',

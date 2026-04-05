@@ -23,8 +23,7 @@ function verificarParam($atributos, $lista)
 }
 
 // função para verificar os tipos de dados que estão vindo do Front-end
-function validarDados($valor, $tipo, $tamanhoZero = true)
-{
+function validarDados($valor, $tipo, $tamanhoZero = true) {
 
     // verfica vazio ou nulo
     if (is_null($valor) || $valor === '') {
@@ -82,8 +81,7 @@ function validarDados($valor, $tipo, $tamanhoZero = true)
 /**
  * Função para verificar os tipos de dados para Consulta
  */
-function validarDadosConsulta($valor, $tipo)
-{
+function validarDadosConsulta($valor, $tipo) {
 
     if ($valor != '') {
         switch ($tipo) {
@@ -125,27 +123,29 @@ function validarDadosConsulta($valor, $tipo)
     return array('codigoHelper' => 0, 'msg' => 'Validação correta.');
 }
 // Função para verificar se datas ou horários são maiores entre si
-function compararDataHora($valorInicial, $valorFinal, $tipo)
-{
-    // passamos a string para hora
-    $valorInicial = strtotime($valorInicial);
-    $valorFinal = strtotime($valorFinal);
+function compararDataHora($valorInicial, $valorFinal, $tipo) {
+    // Convertemos as strings para timestamp (segundos)
+    $inicio = strtotime($valorInicial);
+    $fim = strtotime($valorFinal);
 
-    if ($valorInicial != '' && $valorFinal != '') {
+    // Verifica se as datas passadas são válidas
+    if ($inicio === false || $fim === false) {
+        return array('codigoHelper' => 98, 'msg' => 'Formato de data/hora inválido.');
+    }
+
+    // Só disparar o erro se o inicial for MAIOR que o final
+    if ($inicio > $fim) {
         switch ($tipo) {
             case 'hora':
                 return array('codigoHelper' => 13, 'msg' => 'Hora inicial é maior que a hora final.');
-                break;
             case 'data':
                 return array('codigoHelper' => 14, 'msg' => 'Data inicial é maior que a data final.');
-                break;
             default:
                 return array('codigoHelper' => 97, 'msg' => 'Tipo de comparação não definido.');
         }
     }
 
-    // Valor default da variável $retorno caso não ocorra erro
-    return array('codigoHelper' => 0, 'msg' => 'Validação correta.');
+    // Se chegou aqui, a validação passou (Início é menor ou igual ao Fim)
+    return array('codigoHelper' => 1, 'msg' => 'Validação correta.');
 }
-
 ?>
