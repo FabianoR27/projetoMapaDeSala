@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Sala extends CI_Controller
+class Horario extends CI_Controller
 {
 
     /*
