@@ -277,7 +277,8 @@ class Horario extends CI_Controller
                     $retornoDescricao = validarDadosConsulta($resultado->descricao, 'string');
                     $retornoHoraInicial = validarDadosConsulta($resultado->horaInicial, 'hora');
                     $retornoHoraFinal = validarDadosConsulta($resultado->horaFinal, 'hora');
-                    $retornoComparacaoHoras = compararDataHora($resultado->horaInicial, $resultado->horaFinal, 'hora');
+                    $horaInicialInformada = trim($resultado->horaInicial) !== '';
+                    $horaFinalInformada = trim($resultado->horaFinal) !== '';
 
                     if ($retornoCodigo['codigoHelper'] != 1) {
                         $erros[] = [
@@ -311,13 +312,16 @@ class Horario extends CI_Controller
                         ];
                     }
 
-                    // Validar se a hora inicial é maior que a hora final
-                    if ($retornoComparacaoHoras['codigoHelper'] != 1) {
-                        $erros[] = [
-                            'codigo' => $retornoComparacaoHoras['codigoHelper'],
-                            'campo' => 'Hora Inicial e Hora Final',
-                            'msg' => $retornoComparacaoHoras['msg']
-                        ];
+                    // Só compara as horas quando as duas forem informadas na atualização
+                    if ($horaInicialInformada && $horaFinalInformada) {
+                        $retornoComparacaoHoras = compararDataHora($resultado->horaInicial, $resultado->horaFinal, 'hora');
+                        if ($retornoComparacaoHoras['codigoHelper'] != 1) {
+                            $erros[] = [
+                                'codigo' => $retornoComparacaoHoras['codigoHelper'],
+                                'campo' => 'Hora Inicial e Hora Final',
+                                'msg' => $retornoComparacaoHoras['msg']
+                            ];
+                        }
                     }
 
                     //Se não encontrar erros

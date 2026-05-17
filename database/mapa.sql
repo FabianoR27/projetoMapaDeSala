@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS turmas(
 CREATE TABLE IF NOT EXISTS horarios(
     codigo          INT AUTO_INCREMENT PRIMARY KEY,
     descricao       VARCHAR(50) DEFAULT '',
-    hora_inicial     TIME,
-    hora_final        TIME,
+    hora_inicial    TIME,
+    hora_final      TIME,
     data_criacao    DATETIME DEFAULT now(),
     status          CHAR(2) DEFAULT ''
 );
@@ -65,9 +65,9 @@ CREATE TABLE IF NOT EXISTS mapas(
     codigo_professor    INT DEFAULT 0,
     status              CHAR(2) DEFAULT '',
     
-    FOREIGN KEY (codigo_sala) references salas(codigo),
-    FOREIGN KEY (codigo_horario) references horarios(codigo),
-    FOREIGN KEY (codigo_turma) references turmas(codigo),
+    FOREIGN KEY (codigo_sala)      references salas(codigo),
+    FOREIGN KEY (codigo_horario)   references horarios(codigo),
+    FOREIGN KEY (codigo_turma)     references turmas(codigo),
     FOREIGN KEY (codigo_professor) references professores(codigo)
 );
 
