@@ -70,6 +70,13 @@ function validarDados($valor, $tipo, $tamanhoZero = true) {
             }
             break;
 
+            case 'email':
+                // verifica se é um email válido
+                if (!filter_var($valor, FILTER_VALIDATE_EMAIL)) {
+                    return array('codigoHelper' => 8, 'msg' => 'Email em formato inválido.');
+                }
+                break;
+
         default:
             return array('codigoHelper' => 0, 'msg' => 'Tipo de dado não definido.');
     }
@@ -148,4 +155,36 @@ function compararDataHora($valorInicial, $valorFinal, $tipo) {
     // Se chegou aqui, a validação passou (Início é menor ou igual ao Fim)
     return array('codigoHelper' => 1, 'msg' => 'Validação correta.');
 }
+
+// Fubção para verificar se o CPF é valido quaanto a sua estrutura
+function validarCPF($cpf) {
+    // Remove caracteres não numéricos
+    $cpf = preg_replace('/\D/', '', $cpf);
+
+    // Verifica se o CPF tem 11 dígitos
+    if (strlen($cpf) != 11) {
+        return array('codigoHelper' => 8, 'msg' => 'CPF deve conter 11 dígitos.');
+    }
+
+    // Verifica se todos os dígitos são iguais (ex: 111.111.111-11)
+    if (preg_match('/^(\d)\1{10}$/', $cpf)) {
+        return array('codigoHelper' => 9, 'msg' => 'CPF inválido: todos os dígitos são iguais.');
+    }
+
+    // Validação dos dígitos verificadores
+    for ($t = 9; $t < 11; $t++) {
+        $d = 0;
+        for ($c = 0; $c < $t; $c++) {
+            $d += $cpf[$c] * (($t + 1) - $c);
+        }
+        $d = ((10 * $d) % 11) % 10;
+        if ($cpf[$c] != $d) {
+            return array('codigoHelper' => 10, 'msg' => 'CPF inválido: dígito verificador incorreto.');
+        }
+    }
+
+    // Se chegou aqui, o CPF é válido
+    return array('codigoHelper' => 1, 'msg' => 'CPF válido.');
+}
+
 ?>

@@ -1,8 +1,7 @@
 <?php
-
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Professor extends CI_Controller {
+class Mapa extends CI_Controller {
     /*
     Validação dos tipos de retornos nas validações (Código de erro)
     1  - Operação realizada no banco de dados com sucesso (Inserção, Alteração, Consulta ou Exclusão)
@@ -16,25 +15,31 @@ class Professor extends CI_Controller {
 
     // Atributos privados da classe
     private $codigo;
-    private $nome;
-    private $usuario;
+    private $codProfessor;
+    private $codTurma;
+    private $codHorario;
     private $estatus;
 
     // --- Getters dos atributos ---
-    
+
     public function getCodigo()
     {
         return $this->codigo;
     }
 
-    public function getNome()
+    public function getCodProfessor()
     {
-        return $this->nome;
+        return $this->codProfessor;
     }
 
-    public function getUsuario()
+    public function getCodTurma()
     {
-        return $this->usuario;
+        return $this->codTurma;
+    }
+
+    public function getCodHorario()
+    {
+        return $this->codHorario;
     }
 
     public function getEstatus()
@@ -49,14 +54,19 @@ class Professor extends CI_Controller {
         $this->codigo = $codigoFront;
     }
 
-    public function setNome($nomeFront)
+    public function setCodProfessor($codProfessorFront)
     {
-        $this->nome = $nomeFront;
+        $this->codProfessor = $codProfessorFront;
     }
 
-    public function setUsuario($usuarioFront)
+    public function setCodTurma($codTurmaFront)
     {
-        $this->usuario = $usuarioFront;
+        $this->codTurma = $codTurmaFront;
+    }
+
+    public function setCodHorario($codHorarioFront)
+    {
+        $this->codHorario = $codHorarioFront;
     }
 
     public function setEstatus($estatusFront)
@@ -67,7 +77,7 @@ class Professor extends CI_Controller {
     // --- Métodos de Regra de Negócio ---
 
     /**
-     * Insere um novo professor
+     * Insere um novo mapa de alocação
      */
     public function inserir() {
         // Atributos para controlar o status de nosso método
@@ -78,8 +88,9 @@ class Professor extends CI_Controller {
             $json = file_get_contents('php://input');
             $resultado = json_decode($json);
             $lista = [
-                "nome"    => '0',
-                "usuario" => '0'
+                "codProfessor" => '0',
+                "codTurma"     => '0',
+                "codHorario"   => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
@@ -87,34 +98,45 @@ class Professor extends CI_Controller {
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
                 // Validar campos quanto ao tipo de dado e tamanho (Helper)
-                $retornoNome    = validarDados($resultado->nome, 'string', true);
-                $retornoUsuario = validarDados($resultado->usuario, 'string', true);
+                $retornoProfessor = validarDados($resultado->codProfessor, 'int', true);
+                $retornoTurma     = validarDados($resultado->codTurma, 'int', true);
+                $retornoHorario   = validarDados($resultado->codHorario, 'int', true);
 
-                if($retornoNome['codigoHelper'] != 0){
+                if ($retornoProfessor['codigoHelper'] != 0) {
                     $erros[] = [
-                        'codigo' => $retornoNome['codigoHelper'],
-                        'campo'  => 'Nome',
-                        'msg'    => $retornoNome['msg']
+                        'codigo' => $retornoProfessor['codigoHelper'],
+                        'campo'  => 'CodProfessor',
+                        'msg'    => $retornoProfessor['msg']
                     ];
                 }
 
-                if($retornoUsuario['codigoHelper'] != 0){
+                if ($retornoTurma['codigoHelper'] != 0) {
                     $erros[] = [
-                        'codigo' => $retornoUsuario['codigoHelper'],
-                        'campo'  => 'Usuario',
-                        'msg'    => $retornoUsuario['msg']
+                        'codigo' => $retornoTurma['codigoHelper'],
+                        'campo'  => 'CodTurma',
+                        'msg'    => $retornoTurma['msg']
+                    ];
+                }
+
+                if ($retornoHorario['codigoHelper'] != 0) {
+                    $erros[] = [
+                        'codigo' => $retornoHorario['codigoHelper'],
+                        'campo'  => 'CodHorario',
+                        'msg'    => $retornoHorario['msg']
                     ];
                 }
 
                 // Se não encontrar erros
                 if (empty($erros)) {
-                    $this->setNome($resultado->nome);
-                    $this->setUsuario($resultado->usuario);
+                    $this->setCodProfessor($resultado->codProfessor);
+                    $this->setCodTurma($resultado->codTurma);
+                    $this->setCodHorario($resultado->codHorario);
 
-                    $this->load->model('M_professor');
-                    $resBanco = $this->M_professor->inserir(
-                        $this->getNome(),
-                        $this->getUsuario()
+                    $this->load->model('M_mapa');
+                    $resBanco = $this->M_mapa->inserir(
+                        $this->getCodProfessor(),
+                        $this->getCodTurma(),
+                        $this->getCodHorario()
                     );
 
                     if ($resBanco['codigo'] == 1) {
@@ -148,7 +170,7 @@ class Professor extends CI_Controller {
     }
 
     /**
-     * Consulta professores
+     * Consulta os mapas cadastrados
      */
     public function consultar() {
         // Atributos para controlar o status de nosso método
@@ -159,9 +181,10 @@ class Professor extends CI_Controller {
             $json = file_get_contents('php://input');
             $resultado = json_decode($json);
             $lista = [
-                "codigo"  => '0',
-                "nome"    => '0',
-                "usuario" => '0'
+                "codigo"       => '0',
+                "codProfessor" => '0',
+                "codTurma"     => '0',
+                "codHorario"   => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
@@ -169,11 +192,12 @@ class Professor extends CI_Controller {
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
                 // Validar campos quanto ao tipo de dado e tamanho (Helper)
-                $retornoCodigo  = validarDadosConsulta($resultado->codigo, 'int');
-                $retornoNome    = validarDadosConsulta($resultado->nome, 'string');
-                $retornoUsuario = validarDadosConsulta($resultado->usuario, 'string');
+                $retornoCodigo    = validarDadosConsulta($resultado->codigo, 'int');
+                $retornoProfessor = validarDadosConsulta($resultado->codProfessor, 'int');
+                $retornoTurma     = validarDadosConsulta($resultado->codTurma, 'int');
+                $retornoHorario   = validarDadosConsulta($resultado->codHorario, 'int');
 
-                if($retornoCodigo['codigoHelper'] != 0){
+                if ($retornoCodigo['codigoHelper'] != 0) {
                     $erros[] = [
                         'codigo' => $retornoCodigo['codigoHelper'],
                         'campo'  => 'Codigo',
@@ -181,33 +205,43 @@ class Professor extends CI_Controller {
                     ];
                 }
 
-                if($retornoNome['codigoHelper'] != 0){
+                if ($retornoProfessor['codigoHelper'] != 0) {
                     $erros[] = [
-                        'codigo' => $retornoNome['codigoHelper'],
-                        'campo'  => 'Nome',
-                        'msg'    => $retornoNome['msg']
+                        'codigo' => $retornoProfessor['codigoHelper'],
+                        'campo'  => 'CodProfessor',
+                        'msg'    => $retornoProfessor['msg']
                     ];
                 }
 
-                if($retornoUsuario['codigoHelper'] != 0){
+                if ($retornoTurma['codigoHelper'] != 0) {
                     $erros[] = [
-                        'codigo' => $retornoUsuario['codigoHelper'],
-                        'campo'  => 'Usuario',
-                        'msg'    => $retornoUsuario['msg']
+                        'codigo' => $retornoTurma['codigoHelper'],
+                        'campo'  => 'CodTurma',
+                        'msg'    => $retornoTurma['msg']
+                    ];
+                }
+
+                if ($retornoHorario['codigoHelper'] != 0) {
+                    $erros[] = [
+                        'codigo' => $retornoHorario['codigoHelper'],
+                        'campo'  => 'CodHorario',
+                        'msg'    => $retornoHorario['msg']
                     ];
                 }
 
                 // Se não encontrar erros
                 if (empty($erros)) {
                     $this->setCodigo($resultado->codigo);
-                    $this->setNome($resultado->nome);
-                    $this->setUsuario($resultado->usuario);
+                    $this->setCodProfessor($resultado->codProfessor);
+                    $this->setCodTurma($resultado->codTurma);
+                    $this->setCodHorario($resultado->codHorario);
 
-                    $this->load->model('M_professor');
-                    $resBanco = $this->M_professor->consultar(
+                    $this->load->model('M_mapa');
+                    $resBanco = $this->M_mapa->consultar(
                         $this->getCodigo(),
-                        $this->getNome(),
-                        $this->getUsuario()
+                        $this->getCodProfessor(),
+                        $this->getCodTurma(),
+                        $this->getCodHorario()
                     );
 
                     if ($resBanco['codigo'] == 1) {
@@ -242,7 +276,7 @@ class Professor extends CI_Controller {
     }
 
     /**
-     * Altera os dados de um professor existente
+     * Altera dados de um mapa existente
      */
     public function alterar() {
         // Atributos para controlar o status de nosso método
@@ -253,28 +287,30 @@ class Professor extends CI_Controller {
             $json = file_get_contents('php://input');
             $resultado = json_decode($json);
             $lista = [
-                "codigo"  => '0',
-                "nome"    => '0',
-                "usuario" => '0'
+                "codigo"       => '0',
+                "codProfessor" => '0',
+                "codTurma"     => '0',
+                "codHorario"   => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
                 // Validar vindos de forma correta do frontend (Helper)
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
-                // Pelo menos um dos parâmetros precisam ter dados para acontecer a atualização
-                if(trim($resultado->nome) == '' && trim($resultado->usuario) == ''){
+                // Pelo menos um dos três parâmetros precisam ter dados para acontecer a atualização
+                if (trim($resultado->codProfessor) == '' && trim($resultado->codTurma) == '' && trim($resultado->codHorario) == '') {
                     $erros[] = [
                         'codigo' => 12,
                         'msg'    => 'Pelo menos um parâmetro precisa ser passado para atualização'
                     ];
                 } else {
                     // Validar campos quanto ao tipo de dado e tamanho (Helper)
-                    $retornoCodigo  = validarDados($resultado->codigo, 'int', true);
-                    $retornoNome    = validarDadosConsulta($resultado->nome, 'string');
-                    $retornoUsuario = validarDadosConsulta($resultado->usuario, 'string');
+                    $retornoCodigo    = validarDados($resultado->codigo, 'int', true);
+                    $retornoProfessor = validarDadosConsulta($resultado->codProfessor, 'int');
+                    $retornoTurma     = validarDadosConsulta($resultado->codTurma, 'int');
+                    $retornoHorario   = validarDadosConsulta($resultado->codHorario, 'int');
 
-                    if($retornoCodigo['codigoHelper'] != 0){
+                    if ($retornoCodigo['codigoHelper'] != 0) {
                         $erros[] = [
                             'codigo' => $retornoCodigo['codigoHelper'],
                             'campo'  => 'Codigo',
@@ -282,33 +318,43 @@ class Professor extends CI_Controller {
                         ];
                     }
 
-                    if($retornoNome['codigoHelper'] != 0){
+                    if ($retornoProfessor['codigoHelper'] != 0) {
                         $erros[] = [
-                            'codigo' => $retornoNome['codigoHelper'],
-                            'campo'  => 'Nome',
-                            'msg'    => $retornoNome['msg']
+                            'codigo' => $retornoProfessor['codigoHelper'],
+                            'campo'  => 'CodProfessor',
+                            'msg'    => $retornoProfessor['msg']
                         ];
                     }
 
-                    if($retornoUsuario['codigoHelper'] != 0){
+                    if ($retornoTurma['codigoHelper'] != 0) {
                         $erros[] = [
-                            'codigo' => $retornoUsuario['codigoHelper'],
-                            'campo'  => 'Usuario',
-                            'msg'    => $retornoUsuario['msg']
+                            'codigo' => $retornoTurma['codigoHelper'],
+                            'campo'  => 'CodTurma',
+                            'msg'    => $retornoTurma['msg']
+                        ];
+                    }
+
+                    if ($retornoHorario['codigoHelper'] != 0) {
+                        $erros[] = [
+                            'codigo' => $retornoHorario['codigoHelper'],
+                            'campo'  => 'CodHorario',
+                            'msg'    => $retornoHorario['msg']
                         ];
                     }
 
                     // Se não encontrar erros
                     if (empty($erros)) {
                         $this->setCodigo($resultado->codigo);
-                        $this->setNome($resultado->nome);
-                        $this->setUsuario($resultado->usuario);
+                        $this->setCodProfessor($resultado->codProfessor);
+                        $this->setCodTurma($resultado->codTurma);
+                        $this->setCodHorario($resultado->codHorario);
 
-                        $this->load->model('M_professor');
-                        $resBanco = $this->M_professor->alterar(
+                        $this->load->model('M_mapa');
+                        $resBanco = $this->M_mapa->alterar(
                             $this->getCodigo(),
-                            $this->getNome(),
-                            $this->getUsuario()
+                            $this->getCodProfessor(),
+                            $this->getCodTurma(),
+                            $this->getCodHorario()
                         );
 
                         if ($resBanco['codigo'] == 1) {
@@ -343,7 +389,7 @@ class Professor extends CI_Controller {
     }
 
     /**
-     * Desativa um professor (Exclusão lógica)
+     * Desativa um mapa (Exclusão lógica)
      */
     public function desativar() {
         // Atributos para controlar o status de nosso método
@@ -364,7 +410,7 @@ class Professor extends CI_Controller {
                 // Validar código quanto ao tipo de dado e tamanho (Helper)
                 $retornoCodigo = validarDados($resultado->codigo, 'int', true);
 
-                if($retornoCodigo['codigoHelper'] != 0){
+                if ($retornoCodigo['codigoHelper'] != 0) {
                     $erros[] = [
                         'codigo' => $retornoCodigo['codigoHelper'],
                         'campo'  => 'Codigo',
@@ -376,8 +422,8 @@ class Professor extends CI_Controller {
                 if (empty($erros)) {
                     $this->setCodigo($resultado->codigo);
 
-                    $this->load->model('M_professor');
-                    $resBanco = $this->M_professor->desativar($this->getCodigo());
+                    $this->load->model('M_mapa');
+                    $resBanco = $this->M_mapa->desativar($this->getCodigo());
 
                     if ($resBanco['codigo'] == 1) {
                         $sucesso = true;
