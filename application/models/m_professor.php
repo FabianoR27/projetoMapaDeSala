@@ -21,7 +21,7 @@ class M_professor extends CI_Model {
     public function inserir($nome, $usuario) {
         try {
             // Query de inserção dos dados
-            $this->db->query("insert into tbl_professor (nome, usuario) 
+            $this->db->query("insert into professores (nome, usuario) 
                               values ('$nome', '$usuario')");
 
             // Verificar se a inserção ocorreu com sucesso
@@ -54,7 +54,7 @@ class M_professor extends CI_Model {
         try {
             // Query base para consultar dados
             $sql = "select codigo, nome, usuario 
-                    from tbl_professor where estatus = '' ";
+                    from professores where estatus = '' ";
 
             // Filtros dinâmicos
             if (trim($codigo) != '') {
@@ -106,7 +106,7 @@ class M_professor extends CI_Model {
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Monta a query dinâmica com Query Bindings (?) para segurança
-                $query = "UPDATE tbl_professor SET ";
+                $query = "UPDATE professores SET ";
                 $updates = [];
                 $params = [];
 
@@ -160,7 +160,7 @@ class M_professor extends CI_Model {
     {
         try {
             // Query para consultar dados de acordo com parâmetros passados
-            $sql = "select * from tbl_professor where codigo = $codigo ";
+            $sql = "select * from professores where codigo = $codigo ";
 
             $retornoProfessor = $this->db->query($sql);
 
@@ -205,7 +205,7 @@ class M_professor extends CI_Model {
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Query de atualização dos dados
-                $this->db->query("update tbl_professor set estatus = 'D'
+                $this->db->query("update professores set estatus = 'D'
                                   where codigo = $codigo");
 
                 // Verificar se a atualização ocorreu com sucesso

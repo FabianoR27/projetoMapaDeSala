@@ -21,7 +21,7 @@ class M_turma extends CI_Model
     {
         try {
             // Query de inserção dos dados
-            $this->db->query("insert into tbl_turma (descricao, capacidade, dataInicio) 
+            $this->db->query("insert into turmas (descricao, capacidade, dataInicio) 
                               values ('$descricao', $capacidade, '$dataInicio')");
 
             // Verificar se a inserção ocorreu com sucesso
@@ -56,7 +56,7 @@ class M_turma extends CI_Model
             // Query base para consultar dados
             $sql = "select codigo, descricao, capacidade, dataInicio, 
                     date_format(dataInicio, '%d-%m-%Y') dataIniciobra 
-                    from tbl_turma where estatus = '' ";
+                    from turmas where estatus = '' ";
 
             // Filtros dinâmicos
             if (trim($codigo) != '') {
@@ -112,7 +112,7 @@ class M_turma extends CI_Model
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Monta a query dinâmica
-                $query = "UPDATE tbl_turma SET ";
+                $query = "UPDATE turmas SET ";
                 $updates = [];
 
                 if ($descricao !== '') {
@@ -178,7 +178,7 @@ class M_turma extends CI_Model
     {
         try {
             // Query para consultar dados de acordo com parâmetros passados
-            $sql = "select * from tbl_turma where codigo = $codigo ";
+            $sql = "select * from turmas where codigo = $codigo ";
 
             $retornoTurma = $this->db->query($sql);
 
@@ -225,7 +225,7 @@ class M_turma extends CI_Model
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Query de atualização dos dados
-                $this->db->query("update tbl_turma set estatus = 'D'
+                $this->db->query("update turmas set estatus = 'D'
                                   where codigo = $codigo");
 
                 // Verificar se a atualização ocorreu com sucesso

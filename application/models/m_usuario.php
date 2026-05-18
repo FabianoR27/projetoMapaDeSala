@@ -24,7 +24,7 @@ class M_usuario extends CI_Model {
             $senhaMd5 = md5($senha);
 
             // Query de inserção dos dados
-            $this->db->query("insert into tbl_usuario (usuario, senha, tipoUsuario) 
+            $this->db->query("insert into usuarios (usuario, senha, tipoUsuario) 
                               values ('$usuario', '$senhaMd5', $tipoUsuario)");
 
             // Verificar se a inserção ocorreu com sucesso
@@ -57,7 +57,7 @@ class M_usuario extends CI_Model {
         try {
             // Query base para consultar dados (não traz a senha por segurança)
             $sql = "select codigo, usuario, tipoUsuario 
-                    from tbl_usuario where estatus = '' ";
+                    from usuarios where estatus = '' ";
 
             // Filtros dinâmicos
             if (trim($codigo) != '') {
@@ -109,7 +109,7 @@ class M_usuario extends CI_Model {
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Monta a query dinâmica com Query Bindings (?) para segurança e compatibilidade
-                $query = "UPDATE tbl_usuario SET ";
+                $query = "UPDATE usuarios SET ";
                 $updates = [];
                 $params = [];
 
@@ -168,7 +168,7 @@ class M_usuario extends CI_Model {
     {
         try {
             // Query para consultar dados de acordo com parâmetros passados
-            $sql = "select * from tbl_usuario where codigo = $codigo ";
+            $sql = "select * from usuarios where codigo = $codigo ";
 
             $retornoUsuario = $this->db->query($sql);
 
@@ -213,7 +213,7 @@ class M_usuario extends CI_Model {
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Query de atualização dos dados
-                $this->db->query("update tbl_usuario set estatus = 'D'
+                $this->db->query("update usuarios set estatus = 'D'
                                   where codigo = $codigo");
 
                 // Verificar se a atualização ocorreu com sucesso

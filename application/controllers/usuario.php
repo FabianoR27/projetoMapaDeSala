@@ -132,8 +132,8 @@ class Usuario extends CI_Controller {
                     $this->setSenha($resultado->senha);
                     $this->setTipoUsuario($resultado->tipoUsuario);
 
-                    $this->load->model('M_usuario');
-                    $resBanco = $this->M_usuario->inserir(
+                    $this->load->model('m_usuario');
+                    $resBanco = $this->m_usuario->inserir(
                         $this->getUsuario(),
                         $this->getSenha(),
                         $this->getTipoUsuario()
@@ -225,8 +225,8 @@ class Usuario extends CI_Controller {
                     $this->setUsuario($resultado->usuario);
                     $this->setTipoUsuario($resultado->tipoUsuario);
 
-                    $this->load->model('M_usuario');
-                    $resBanco = $this->M_usuario->consultar(
+                    $this->load->model('m_usuario');
+                    $resBanco = $this->m_usuario->consultar(
                         $this->getCodigo(),
                         $this->getUsuario(),
                         $this->getTipoUsuario()
@@ -337,8 +337,8 @@ class Usuario extends CI_Controller {
                         $this->setSenha($resultado->senha);
                         $this->setTipoUsuario($resultado->tipoUsuario);
 
-                        $this->load->model('M_usuario');
-                        $resBanco = $this->M_usuario->alterar(
+                        $this->load->model('m_usuario');
+                        $resBanco = $this->m_usuario->alterar(
                             $this->getCodigo(),
                             $this->getUsuario(),
                             $this->getSenha(),
@@ -410,8 +410,8 @@ class Usuario extends CI_Controller {
                 if (empty($erros)) {
                     $this->setCodigo($resultado->codigo);
 
-                    $this->load->model('M_usuario');
-                    $resBanco = $this->M_usuario->desativar($this->getCodigo());
+                    $this->load->model('m_usuario');
+                    $resBanco = $this->m_usuario->desativar($this->getCodigo());
 
                     if ($resBanco['codigo'] == 1) {
                         $sucesso = true;

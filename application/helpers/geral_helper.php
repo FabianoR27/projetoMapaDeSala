@@ -4,6 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 // função para verificar os parâmetros que estão vindo do Front-end
 function verificarParam($atributos, $lista)
 {
+    $status = 1; // comentar essa linha se der erro
     // verificar se os elementos do Front-end estão nos atributos necessários
     foreach ($lista as $key => $value) {
         if (array_key_exists($key, get_object_vars($atributos))) {

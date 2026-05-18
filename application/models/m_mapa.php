@@ -21,7 +21,7 @@ class M_mapa extends CI_Model {
     public function inserir($codProfessor, $codTurma, $codHorario) {
         try {
             // Query de inserção dos dados
-            $this->db->query("insert into tbl_mapa (codProfessor, codTurma, codHorario) 
+            $this->db->query("insert into mapas (codProfessor, codTurma, codHorario) 
                               values ($codProfessor, $codTurma, $codHorario)");
 
             // Verificar se a inserção ocorreu com sucesso
@@ -55,7 +55,7 @@ class M_mapa extends CI_Model {
         try {
             // Query base para consultar dados
             $sql = "select codigo, codProfessor, codTurma, codHorario 
-                    from tbl_mapa where estatus = '' ";
+                    from mapas where estatus = '' ";
 
             // Filtros dinâmicos
             if (trim($codigo) != '') {
@@ -111,7 +111,7 @@ class M_mapa extends CI_Model {
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Monta a query dinâmica com Query Bindings (?) para segurança e compatibilidade
-                $query = "UPDATE tbl_mapa SET ";
+                $query = "UPDATE mapas SET ";
                 $updates = [];
                 $params = [];
 
@@ -169,7 +169,7 @@ class M_mapa extends CI_Model {
     {
         try {
             // Query para consultar dados de acordo com parâmetros passados
-            $sql = "select * from tbl_mapa where codigo = $codigo ";
+            $sql = "select * from mapas where codigo = $codigo ";
 
             $retornoMapa = $this->db->query($sql);
 
@@ -214,7 +214,7 @@ class M_mapa extends CI_Model {
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Query de atualização dos dados
-                $this->db->query("update tbl_mapa set estatus = 'D'
+                $this->db->query("update mapas set estatus = 'D'
                                   where codigo = $codigo");
 
                 // Verificar se a atualização ocorreu com sucesso
