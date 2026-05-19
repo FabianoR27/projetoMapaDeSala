@@ -11,14 +11,16 @@ class Professor extends CI_Controller {
     4  - Conteúdo não inteiro
     5  - Conteúdo não é um texto
     12 - Na atualização, pelo menos um atributo deve ser passado
+    13 - CPF já cadastrado no sistema
     99 - Parâmetros passados do front não correspondem ao método
     */
 
     // Atributos privados da classe
     private $codigo;
     private $nome;
-    private $usuario;
-    private $estatus;
+    private $cpf;
+    private $tipo;
+    private $status;
 
     // --- Getters dos atributos ---
     
@@ -32,14 +34,19 @@ class Professor extends CI_Controller {
         return $this->nome;
     }
 
-    public function getUsuario()
+    public function getCpf()
     {
-        return $this->usuario;
+        return $this->cpf;
     }
 
-    public function getEstatus()
+    public function getTipo()
     {
-        return $this->estatus;
+        return $this->tipo;
+    }
+
+    public function getStatus()
+    {
+        return $this->status;
     }
 
     // --- Setters dos atributos ---
@@ -54,14 +61,19 @@ class Professor extends CI_Controller {
         $this->nome = $nomeFront;
     }
 
-    public function setUsuario($usuarioFront)
+    public function setCpf($cpfFront)
     {
-        $this->usuario = $usuarioFront;
+        $this->cpf = $cpfFront;
     }
 
-    public function setEstatus($estatusFront)
+    public function setTipo($tipoFront)
     {
-        $this->estatus = $estatusFront;
+        $this->tipo = $tipoFront;
+    }
+
+    public function setStatus($statusFront)
+    {
+        $this->status = $statusFront;
     }
 
     // --- Métodos de Regra de Negócio ---
@@ -79,7 +91,8 @@ class Professor extends CI_Controller {
             $resultado = json_decode($json);
             $lista = [
                 "nome"    => '0',
-                "usuario" => '0'
+                "cpf" => '0',
+                "tipo" => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
@@ -88,9 +101,10 @@ class Professor extends CI_Controller {
             } else {
                 // Validar campos quanto ao tipo de dado e tamanho (Helper)
                 $retornoNome    = validarDados($resultado->nome, 'string', true);
-                $retornoUsuario = validarDados($resultado->usuario, 'string', true);
+                $retornoCpf     = validarDados($resultado->cpf, 'string', true);
+                $retornoTipo    = validarDados($resultado->tipo, 'string', true);
 
-                if($retornoNome['codigoHelper'] != 0){
+                if($retornoNome['codigoHelper'] != 1){
                     $erros[] = [
                         'codigo' => $retornoNome['codigoHelper'],
                         'campo'  => 'Nome',
@@ -98,23 +112,49 @@ class Professor extends CI_Controller {
                     ];
                 }
 
-                if($retornoUsuario['codigoHelper'] != 0){
+                if($retornoCpf['codigoHelper'] != 1){
                     $erros[] = [
-                        'codigo' => $retornoUsuario['codigoHelper'],
-                        'campo'  => 'Usuario',
-                        'msg'    => $retornoUsuario['msg']
+                        'codigo' => $retornoCpf['codigoHelper'],
+                        'campo'  => 'Cpf',
+                        'msg'    => $retornoCpf['msg']
                     ];
                 }
 
-                // Se não encontrar erros
+                if($retornoTipo['codigoHelper'] != 1){
+                    $erros[] = [
+                        'codigo' => $retornoTipo['codigoHelper'],
+                        'campo'  => 'Tipo',
+                        'msg'    => $retornoTipo['msg']
+                    ];
+                }
+
+                // Se não houver erros de formatação básica, fazemos a checagem de duplicidade no banco
+                if (empty($erros)) {
+                    $this->load->model('M_professor');
+                    
+                    // Consulta se já existe algum professor com este CPF
+                    $checkCpf = $this->M_professor->consultar(0, '', $resultado->cpf, '');
+                    
+                    // Verifica se a consulta retornou sucesso e se o array de dados não está vazio
+                    if ($checkCpf['codigo'] == 1 && !empty($checkCpf['dados'])) {
+                        $erros[] = [
+                            'codigo' => 13,
+                            'campo'  => 'Cpf',
+                            'msg'    => 'O CPF informado já está cadastrado no sistema.'
+                        ];
+                    }
+                }
+
+                // Se continuar sem erros após a validação do CPF, prossegue com a inserção
                 if (empty($erros)) {
                     $this->setNome($resultado->nome);
-                    $this->setUsuario($resultado->usuario);
+                    $this->setCpf($resultado->cpf);
+                    $this->setTipo($resultado->tipo);
 
-                    $this->load->model('M_professor');
                     $resBanco = $this->M_professor->inserir(
                         $this->getNome(),
-                        $this->getUsuario()
+                        $this->getCpf(),
+                        $this->getTipo()
                     );
 
                     if ($resBanco['codigo'] == 1) {
@@ -161,7 +201,8 @@ class Professor extends CI_Controller {
             $lista = [
                 "codigo"  => '0',
                 "nome"    => '0',
-                "usuario" => '0'
+                "cpf" => '0',
+                "tipo" => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
@@ -171,7 +212,8 @@ class Professor extends CI_Controller {
                 // Validar campos quanto ao tipo de dado e tamanho (Helper)
                 $retornoCodigo  = validarDadosConsulta($resultado->codigo, 'int');
                 $retornoNome    = validarDadosConsulta($resultado->nome, 'string');
-                $retornoUsuario = validarDadosConsulta($resultado->usuario, 'string');
+                $retornoCpf = validarDadosConsulta($resultado->cpf, 'string');
+                $retornoTipo = validarDadosConsulta($resultado->tipo, 'string');
 
                 if($retornoCodigo['codigoHelper'] != 0){
                     $erros[] = [
@@ -189,11 +231,19 @@ class Professor extends CI_Controller {
                     ];
                 }
 
-                if($retornoUsuario['codigoHelper'] != 0){
+                if($retornoCpf['codigoHelper'] != 0){
                     $erros[] = [
-                        'codigo' => $retornoUsuario['codigoHelper'],
-                        'campo'  => 'Usuario',
-                        'msg'    => $retornoUsuario['msg']
+                        'codigo' => $retornoCpf['codigoHelper'],
+                        'campo'  => 'CPF',
+                        'msg'    => $retornoCpf['msg']
+                    ];
+                }
+
+                if($retornoTipo['codigoHelper'] != 0){
+                    $erros[] = [
+                        'codigo' => $retornoTipo['codigoHelper'],
+                        'campo'  => 'Tipo',
+                        'msg'    => $retornoTipo['msg']
                     ];
                 }
 
@@ -201,13 +251,15 @@ class Professor extends CI_Controller {
                 if (empty($erros)) {
                     $this->setCodigo($resultado->codigo);
                     $this->setNome($resultado->nome);
-                    $this->setUsuario($resultado->usuario);
+                    $this->setCpf($resultado->cpf);
+                    $this->setTipo($resultado->tipo);
 
                     $this->load->model('M_professor');
                     $resBanco = $this->M_professor->consultar(
                         $this->getCodigo(),
                         $this->getNome(),
-                        $this->getUsuario()
+                        $this->getCpf(),
+                        $this->getTipo()
                     );
 
                     if ($resBanco['codigo'] == 1) {
@@ -255,7 +307,8 @@ class Professor extends CI_Controller {
             $lista = [
                 "codigo"  => '0',
                 "nome"    => '0',
-                "usuario" => '0'
+                "cpf" => '0',
+                "tipo" => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
@@ -263,7 +316,7 @@ class Professor extends CI_Controller {
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
                 // Pelo menos um dos parâmetros precisam ter dados para acontecer a atualização
-                if(trim($resultado->nome) == '' && trim($resultado->usuario) == ''){
+                if(trim($resultado->nome) == '' && trim($resultado->cpf) == '' && trim($resultado->tipo) == ''){
                     $erros[] = [
                         'codigo' => 12,
                         'msg'    => 'Pelo menos um parâmetro precisa ser passado para atualização'
@@ -272,9 +325,10 @@ class Professor extends CI_Controller {
                     // Validar campos quanto ao tipo de dado e tamanho (Helper)
                     $retornoCodigo  = validarDados($resultado->codigo, 'int', true);
                     $retornoNome    = validarDadosConsulta($resultado->nome, 'string');
-                    $retornoUsuario = validarDadosConsulta($resultado->usuario, 'string');
+                    $retornoCpf = validarDadosConsulta($resultado->cpf, 'string');
+                    $retornoTipo = validarDadosConsulta($resultado->tipo, 'string');
 
-                    if($retornoCodigo['codigoHelper'] != 0){
+                    if($retornoCodigo['codigoHelper'] != 1){
                         $erros[] = [
                             'codigo' => $retornoCodigo['codigoHelper'],
                             'campo'  => 'Codigo',
@@ -290,11 +344,19 @@ class Professor extends CI_Controller {
                         ];
                     }
 
-                    if($retornoUsuario['codigoHelper'] != 0){
+                    if($retornoCpf['codigoHelper'] != 0){
                         $erros[] = [
-                            'codigo' => $retornoUsuario['codigoHelper'],
-                            'campo'  => 'Usuario',
-                            'msg'    => $retornoUsuario['msg']
+                            'codigo' => $retornoCpf['codigoHelper'],
+                            'campo'  => 'CPF',
+                            'msg'    => $retornoCpf['msg']
+                        ];
+                    }
+
+                    if($retornoTipo['codigoHelper'] != 0){
+                        $erros[] = [
+                            'codigo' => $retornoTipo['codigoHelper'],
+                            'campo'  => 'Tipo',
+                            'msg'    => $retornoTipo['msg']
                         ];
                     }
 
@@ -302,13 +364,15 @@ class Professor extends CI_Controller {
                     if (empty($erros)) {
                         $this->setCodigo($resultado->codigo);
                         $this->setNome($resultado->nome);
-                        $this->setUsuario($resultado->usuario);
+                        $this->setCpf($resultado->cpf);
+                        $this->setTipo($resultado->tipo);
 
                         $this->load->model('M_professor');
                         $resBanco = $this->M_professor->alterar(
                             $this->getCodigo(),
                             $this->getNome(),
-                            $this->getUsuario()
+                            $this->getCpf(),
+                            $this->getTipo()
                         );
 
                         if ($resBanco['codigo'] == 1) {
@@ -364,7 +428,7 @@ class Professor extends CI_Controller {
                 // Validar código quanto ao tipo de dado e tamanho (Helper)
                 $retornoCodigo = validarDados($resultado->codigo, 'int', true);
 
-                if($retornoCodigo['codigoHelper'] != 0){
+                if($retornoCodigo['codigoHelper'] != 1){
                     $erros[] = [
                         'codigo' => $retornoCodigo['codigoHelper'],
                         'campo'  => 'Codigo',

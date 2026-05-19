@@ -2,138 +2,79 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Mapa extends CI_Controller {
-    /*
-    Validação dos tipos de retornos nas validações (Código de erro)
-    1  - Operação realizada no banco de dados com sucesso (Inserção, Alteração, Consulta ou Exclusão)
-    2  - Conteúdo passado nulo ou vazio
-    3  - Conteúdo zerado
-    4  - Conteúdo não inteiro
-    5  - Conteúdo não é um texto
-    12 - Na atualização, pelo menos um atributo deve ser passado
-    99 - Parâmetros passados do front não correspondem ao método
-    */
 
     // Atributos privados da classe
     private $codigo;
+    private $codSala;
     private $codProfessor;
     private $codTurma;
     private $codHorario;
-    private $estatus;
+    private $status;
 
-    // --- Getters dos atributos ---
+    // --- Getters ---
+    public function getCodigo() { return $this->codigo; }
+    public function getCodSala() { return $this->codSala; }
+    public function getCodProfessor() { return $this->codProfessor; }
+    public function getCodTurma() { return $this->codTurma; }
+    public function getCodHorario() { return $this->codHorario; }
+    public function getStatus() { return $this->status; }
 
-    public function getCodigo()
-    {
-        return $this->codigo;
-    }
-
-    public function getCodProfessor()
-    {
-        return $this->codProfessor;
-    }
-
-    public function getCodTurma()
-    {
-        return $this->codTurma;
-    }
-
-    public function getCodHorario()
-    {
-        return $this->codHorario;
-    }
-
-    public function getEstatus()
-    {
-        return $this->estatus;
-    }
-
-    // --- Setters dos atributos ---
-
-    public function setCodigo($codigoFront)
-    {
-        $this->codigo = $codigoFront;
-    }
-
-    public function setCodProfessor($codProfessorFront)
-    {
-        $this->codProfessor = $codProfessorFront;
-    }
-
-    public function setCodTurma($codTurmaFront)
-    {
-        $this->codTurma = $codTurmaFront;
-    }
-
-    public function setCodHorario($codHorarioFront)
-    {
-        $this->codHorario = $codHorarioFront;
-    }
-
-    public function setEstatus($estatusFront)
-    {
-        $this->estatus = $estatusFront;
-    }
+    // --- Setters ---
+    public function setCodigo($codigoFront) { $this->codigo = $codigoFront; }
+    public function setCodSala($codSalaFront) { $this->codSala = $codSalaFront; }
+    public function setCodProfessor($codProfessorFront) { $this->codProfessor = $codProfessorFront; }
+    public function setCodTurma($codTurmaFront) { $this->codTurma = $codTurmaFront; }
+    public function setCodHorario($codHorarioFront) { $this->codHorario = $codHorarioFront; }
+    public function setStatus($statusFront) { $this->status = $statusFront; }
 
     // --- Métodos de Regra de Negócio ---
 
-    /**
-     * Insere um novo mapa de alocação
-     */
     public function inserir() {
-        // Atributos para controlar o status de nosso método
         $erros = [];
         $sucesso = false;
 
         try {
             $json = file_get_contents('php://input');
             $resultado = json_decode($json);
+            
+            // Padronizado para snake_case
             $lista = [
-                "codProfessor" => '0',
-                "codTurma"     => '0',
-                "codHorario"   => '0'
+                "codigo_sala"      => '0',
+                "codigo_professor" => '0',
+                "codigo_turma"     => '0',
+                "codigo_horario"   => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
-                // Validar vindos de forma correta do frontend (Helper)
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
-                // Validar campos quanto ao tipo de dado e tamanho (Helper)
-                $retornoProfessor = validarDados($resultado->codProfessor, 'int', true);
-                $retornoTurma     = validarDados($resultado->codTurma, 'int', true);
-                $retornoHorario   = validarDados($resultado->codHorario, 'int', true);
+                $retornoSala      = validarDados($resultado->codigo_sala, 'int', true);
+                $retornoProfessor = validarDados($resultado->codigo_professor, 'int', true);
+                $retornoTurma     = validarDados($resultado->codigo_turma, 'int', true);
+                $retornoHorario   = validarDados($resultado->codigo_horario, 'int', true);
 
-                if ($retornoProfessor['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoProfessor['codigoHelper'],
-                        'campo'  => 'CodProfessor',
-                        'msg'    => $retornoProfessor['msg']
-                    ];
+                if ($retornoSala['codigoHelper'] != 1) {
+                    $erros[] = ['codigo' => $retornoSala['codigoHelper'], 'campo' => 'CodigoSala', 'msg' => $retornoSala['msg']];
+                }
+                if ($retornoProfessor['codigoHelper'] != 1) {
+                    $erros[] = ['codigo' => $retornoProfessor['codigoHelper'], 'campo' => 'CodigoProfessor', 'msg' => $retornoProfessor['msg']];
+                }
+                if ($retornoTurma['codigoHelper'] != 1) {
+                    $erros[] = ['codigo' => $retornoTurma['codigoHelper'], 'campo' => 'CodigoTurma', 'msg' => $retornoTurma['msg']];
+                }
+                if ($retornoHorario['codigoHelper'] != 1) {
+                    $erros[] = ['codigo' => $retornoHorario['codigoHelper'], 'campo' => 'CodigoHorario', 'msg' => $retornoHorario['msg']];
                 }
 
-                if ($retornoTurma['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoTurma['codigoHelper'],
-                        'campo'  => 'CodTurma',
-                        'msg'    => $retornoTurma['msg']
-                    ];
-                }
-
-                if ($retornoHorario['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoHorario['codigoHelper'],
-                        'campo'  => 'CodHorario',
-                        'msg'    => $retornoHorario['msg']
-                    ];
-                }
-
-                // Se não encontrar erros
                 if (empty($erros)) {
-                    $this->setCodProfessor($resultado->codProfessor);
-                    $this->setCodTurma($resultado->codTurma);
-                    $this->setCodHorario($resultado->codHorario);
+                    $this->setCodSala($resultado->codigo_sala);
+                    $this->setCodProfessor($resultado->codigo_professor);
+                    $this->setCodTurma($resultado->codigo_turma);
+                    $this->setCodHorario($resultado->codigo_horario);
 
                     $this->load->model('M_mapa');
                     $resBanco = $this->M_mapa->inserir(
+                        $this->getCodSala(),
                         $this->getCodProfessor(),
                         $this->getCodTurma(),
                         $this->getCodHorario()
@@ -142,11 +83,7 @@ class Mapa extends CI_Controller {
                     if ($resBanco['codigo'] == 1) {
                         $sucesso = true;
                     } else {
-                        // Captura erro do banco
-                        $erros[] = [
-                            'codigo' => $resBanco['codigo'],
-                            'msg'    => $resBanco['msg']
-                        ];
+                        $erros[] = ['codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
                     }
                 }
             }
@@ -154,91 +91,66 @@ class Mapa extends CI_Controller {
             $erros[] = ['codigo' => 0, 'msg' => 'Erro inesperado: ' . $e->getMessage()];
         }
 
-        // Monta retorno único
-        if ($sucesso == true) {
-            $retorno = [
-                'sucesso' => $sucesso, 
-                'codigo'  => $resBanco['codigo'],
-                'msg'     => $resBanco['msg']
-            ];
+        if ($sucesso) {
+            $retorno = ['sucesso' => $sucesso, 'codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
         } else {
             $retorno = ['sucesso' => $sucesso, 'erros' => $erros];
         }
-
-        // Transforma o array em JSON
         echo json_encode($retorno);
     }
 
-    /**
-     * Consulta os mapas cadastrados
-     */
     public function consultar() {
-        // Atributos para controlar o status de nosso método
         $erros = [];
         $sucesso = false;
 
         try {
             $json = file_get_contents('php://input');
             $resultado = json_decode($json);
+            
             $lista = [
-                "codigo"       => '0',
-                "codProfessor" => '0',
-                "codTurma"     => '0',
-                "codHorario"   => '0'
+                "codigo"           => '0',
+                "codigo_sala"      => '0',
+                "codigo_professor" => '0',
+                "codigo_turma"     => '0',
+                "codigo_horario"   => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
-                // Validar vindos de forma correta do frontend (Helper)
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
-                // Validar campos quanto ao tipo de dado e tamanho (Helper)
                 $retornoCodigo    = validarDadosConsulta($resultado->codigo, 'int');
-                $retornoProfessor = validarDadosConsulta($resultado->codProfessor, 'int');
-                $retornoTurma     = validarDadosConsulta($resultado->codTurma, 'int');
-                $retornoHorario   = validarDadosConsulta($resultado->codHorario, 'int');
+                $retornoSala      = validarDadosConsulta($resultado->codigo_sala, 'int');
+                $retornoProfessor = validarDadosConsulta($resultado->codigo_professor, 'int');
+                $retornoTurma     = validarDadosConsulta($resultado->codigo_turma, 'int');
+                $retornoHorario   = validarDadosConsulta($resultado->codigo_horario, 'int');
 
                 if ($retornoCodigo['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoCodigo['codigoHelper'],
-                        'campo'  => 'Codigo',
-                        'msg'    => $retornoCodigo['msg']
-                    ];
+                    $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Codigo', 'msg' => $retornoCodigo['msg']];
                 }
-
+                if ($retornoSala['codigoHelper'] != 0) {
+                    $erros[] = ['codigo' => $retornoSala['codigoHelper'], 'campo' => 'CodigoSala', 'msg' => $retornoSala['msg']];
+                }
                 if ($retornoProfessor['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoProfessor['codigoHelper'],
-                        'campo'  => 'CodProfessor',
-                        'msg'    => $retornoProfessor['msg']
-                    ];
+                    $erros[] = ['codigo' => $retornoProfessor['codigoHelper'], 'campo' => 'CodigoProfessor', 'msg' => $retornoProfessor['msg']];
                 }
-
                 if ($retornoTurma['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoTurma['codigoHelper'],
-                        'campo'  => 'CodTurma',
-                        'msg'    => $retornoTurma['msg']
-                    ];
+                    $erros[] = ['codigo' => $retornoTurma['codigoHelper'], 'campo' => 'CodigoTurma', 'msg' => $retornoTurma['msg']];
                 }
-
                 if ($retornoHorario['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoHorario['codigoHelper'],
-                        'campo'  => 'CodHorario',
-                        'msg'    => $retornoHorario['msg']
-                    ];
+                    $erros[] = ['codigo' => $retornoHorario['codigoHelper'], 'campo' => 'CodigoHorario', 'msg' => $retornoHorario['msg']];
                 }
 
-                // Se não encontrar erros
                 if (empty($erros)) {
                     $this->setCodigo($resultado->codigo);
-                    $this->setCodProfessor($resultado->codProfessor);
-                    $this->setCodTurma($resultado->codTurma);
-                    $this->setCodHorario($resultado->codHorario);
+                    $this->setCodSala($resultado->codigo_sala);
+                    $this->setCodProfessor($resultado->codigo_professor);
+                    $this->setCodTurma($resultado->codigo_turma);
+                    $this->setCodHorario($resultado->codigo_horario);
 
                     $this->load->model('M_mapa');
                     $resBanco = $this->M_mapa->consultar(
                         $this->getCodigo(),
+                        $this->getCodSala(),
                         $this->getCodProfessor(),
                         $this->getCodTurma(),
                         $this->getCodHorario()
@@ -247,11 +159,7 @@ class Mapa extends CI_Controller {
                     if ($resBanco['codigo'] == 1) {
                         $sucesso = true;
                     } else {
-                        // Captura erro do banco
-                        $erros[] = [
-                            'codigo' => $resBanco['codigo'],
-                            'msg'    => $resBanco['msg']
-                        ];
+                        $erros[] = ['codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
                     }
                 }
             }
@@ -259,99 +167,69 @@ class Mapa extends CI_Controller {
             $erros[] = ['codigo' => 0, 'msg' => 'Erro inesperado: ' . $e->getMessage()];
         }
 
-        // Monta retorno único
-        if ($sucesso == true) {
-            $retorno = [
-                'sucesso' => $sucesso, 
-                'codigo'  => $resBanco['codigo'],
-                'msg'     => $resBanco['msg'],
-                'dados'   => $resBanco['dados']
-            ];
+        if ($sucesso) {
+            $retorno = ['sucesso' => $sucesso, 'codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg'], 'dados' => $resBanco['dados']];
         } else {
             $retorno = ['sucesso' => $sucesso, 'erros' => $erros];
         }
-
-        // Transforma o array em JSON
         echo json_encode($retorno);
     }
 
-    /**
-     * Altera dados de um mapa existente
-     */
     public function alterar() {
-        // Atributos para controlar o status de nosso método
         $erros = [];
         $sucesso = false;
 
         try {
             $json = file_get_contents('php://input');
             $resultado = json_decode($json);
+            
             $lista = [
-                "codigo"       => '0',
-                "codProfessor" => '0',
-                "codTurma"     => '0',
-                "codHorario"   => '0'
+                "codigo"           => '0',
+                "codigo_sala"      => '0',
+                "codigo_professor" => '0',
+                "codigo_turma"     => '0',
+                "codigo_horario"   => '0'
             ];
 
             if (verificarParam($resultado, $lista) != 1) {
-                // Validar vindos de forma correta do frontend (Helper)
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
-                // Pelo menos um dos três parâmetros precisam ter dados para acontecer a atualização
-                if (trim($resultado->codProfessor) == '' && trim($resultado->codTurma) == '' && trim($resultado->codHorario) == '') {
-                    $erros[] = [
-                        'codigo' => 12,
-                        'msg'    => 'Pelo menos um parâmetro precisa ser passado para atualização'
-                    ];
+                if (trim($resultado->codigo_sala) == '' && trim($resultado->codigo_professor) == '' && trim($resultado->codigo_turma) == '' && trim($resultado->codigo_horario) == '') {
+                    $erros[] = ['codigo' => 12, 'msg' => 'Pelo menos um parâmetro precisa ser passado para atualização'];
                 } else {
-                    // Validar campos quanto ao tipo de dado e tamanho (Helper)
                     $retornoCodigo    = validarDados($resultado->codigo, 'int', true);
-                    $retornoProfessor = validarDadosConsulta($resultado->codProfessor, 'int');
-                    $retornoTurma     = validarDadosConsulta($resultado->codTurma, 'int');
-                    $retornoHorario   = validarDadosConsulta($resultado->codHorario, 'int');
+                    $retornoSala      = validarDadosConsulta($resultado->codigo_sala, 'int');
+                    $retornoProfessor = validarDadosConsulta($resultado->codigo_professor, 'int');
+                    $retornoTurma     = validarDadosConsulta($resultado->codigo_turma, 'int');
+                    $retornoHorario   = validarDadosConsulta($resultado->codigo_horario, 'int');
 
-                    if ($retornoCodigo['codigoHelper'] != 0) {
-                        $erros[] = [
-                            'codigo' => $retornoCodigo['codigoHelper'],
-                            'campo'  => 'Codigo',
-                            'msg'    => $retornoCodigo['msg']
-                        ];
+                    if ($retornoCodigo['codigoHelper'] != 1) {
+                        $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Codigo', 'msg' => $retornoCodigo['msg']];
                     }
-
+                    if ($retornoSala['codigoHelper'] != 0) {
+                        $erros[] = ['codigo' => $retornoSala['codigoHelper'], 'campo' => 'CodigoSala', 'msg' => $retornoSala['msg']];
+                    }
                     if ($retornoProfessor['codigoHelper'] != 0) {
-                        $erros[] = [
-                            'codigo' => $retornoProfessor['codigoHelper'],
-                            'campo'  => 'CodProfessor',
-                            'msg'    => $retornoProfessor['msg']
-                        ];
+                        $erros[] = ['codigo' => $retornoProfessor['codigoHelper'], 'campo' => 'CodigoProfessor', 'msg' => $retornoProfessor['msg']];
                     }
-
                     if ($retornoTurma['codigoHelper'] != 0) {
-                        $erros[] = [
-                            'codigo' => $retornoTurma['codigoHelper'],
-                            'campo'  => 'CodTurma',
-                            'msg'    => $retornoTurma['msg']
-                        ];
+                        $erros[] = ['codigo' => $retornoTurma['codigoHelper'], 'campo' => 'CodigoTurma', 'msg' => $retornoTurma['msg']];
                     }
-
                     if ($retornoHorario['codigoHelper'] != 0) {
-                        $erros[] = [
-                            'codigo' => $retornoHorario['codigoHelper'],
-                            'campo'  => 'CodHorario',
-                            'msg'    => $retornoHorario['msg']
-                        ];
+                        $erros[] = ['codigo' => $retornoHorario['codigoHelper'], 'campo' => 'CodigoHorario', 'msg' => $retornoHorario['msg']];
                     }
 
-                    // Se não encontrar erros
                     if (empty($erros)) {
                         $this->setCodigo($resultado->codigo);
-                        $this->setCodProfessor($resultado->codProfessor);
-                        $this->setCodTurma($resultado->codTurma);
-                        $this->setCodHorario($resultado->codHorario);
+                        $this->setCodSala($resultado->codigo_sala);
+                        $this->setCodProfessor($resultado->codigo_professor);
+                        $this->setCodTurma($resultado->codigo_turma);
+                        $this->setCodHorario($resultado->codigo_horario);
 
                         $this->load->model('M_mapa');
                         $resBanco = $this->M_mapa->alterar(
                             $this->getCodigo(),
+                            $this->getCodSala(),
                             $this->getCodProfessor(),
                             $this->getCodTurma(),
                             $this->getCodHorario()
@@ -360,11 +238,7 @@ class Mapa extends CI_Controller {
                         if ($resBanco['codigo'] == 1) {
                             $sucesso = true;
                         } else {
-                            // Captura erro do banco
-                            $erros[] = [
-                                'codigo' => $resBanco['codigo'],
-                                'msg'    => $resBanco['msg']
-                            ];
+                            $erros[] = ['codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
                         }
                     }
                 }
@@ -373,52 +247,33 @@ class Mapa extends CI_Controller {
             $erros[] = ['codigo' => 0, 'msg' => 'Erro inesperado: ' . $e->getMessage()];
         }
 
-        // Monta retorno único
-        if ($sucesso == true) {
-            $retorno = [
-                'sucesso' => $sucesso, 
-                'codigo'  => $resBanco['codigo'],
-                'msg'     => $resBanco['msg']
-            ];
+        if ($sucesso) {
+            $retorno = ['sucesso' => $sucesso, 'codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
         } else {
             $retorno = ['sucesso' => $sucesso, 'erros' => $erros];
         }
-
-        // Transforma o array em JSON
         echo json_encode($retorno);
     }
 
-    /**
-     * Desativa um mapa (Exclusão lógica)
-     */
     public function desativar() {
-        // Atributos para controlar o status de nosso método
         $erros = [];
         $sucesso = false;
 
         try {
             $json = file_get_contents('php://input');
             $resultado = json_decode($json);
-            $lista = [
-                "codigo" => '0'
-            ];
+            
+            $lista = ["codigo" => '0'];
 
             if (verificarParam($resultado, $lista) != 1) {
-                // Validar vindos de forma correta do frontend (Helper)
                 $erros[] = ['codigo' => 99, 'msg' => 'Campos inexistentes ou incorretos no FrontEnd.'];
             } else {
-                // Validar código quanto ao tipo de dado e tamanho (Helper)
                 $retornoCodigo = validarDados($resultado->codigo, 'int', true);
 
-                if ($retornoCodigo['codigoHelper'] != 0) {
-                    $erros[] = [
-                        'codigo' => $retornoCodigo['codigoHelper'],
-                        'campo'  => 'Codigo',
-                        'msg'    => $retornoCodigo['msg']
-                    ];
+                if ($retornoCodigo['codigoHelper'] != 1) {
+                    $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Codigo', 'msg' => $retornoCodigo['msg']];
                 }
 
-                // Se não encontrar erros
                 if (empty($erros)) {
                     $this->setCodigo($resultado->codigo);
 
@@ -428,11 +283,7 @@ class Mapa extends CI_Controller {
                     if ($resBanco['codigo'] == 1) {
                         $sucesso = true;
                     } else {
-                        // Captura erro do banco
-                        $erros[] = [
-                            'codigo' => $resBanco['codigo'],
-                            'msg'    => $resBanco['msg']
-                        ];
+                        $erros[] = ['codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
                     }
                 }
             }
@@ -440,18 +291,11 @@ class Mapa extends CI_Controller {
             $erros[] = ['codigo' => 0, 'msg' => 'Erro inesperado: ' . $e->getMessage()];
         }
 
-        // Monta retorno único
-        if ($sucesso == true) {
-            $retorno = [
-                'sucesso' => $sucesso, 
-                'codigo'  => $resBanco['codigo'],
-                'msg'     => $resBanco['msg']
-            ];
+        if ($sucesso) {
+            $retorno = ['sucesso' => $sucesso, 'codigo' => $resBanco['codigo'], 'msg' => $resBanco['msg']];
         } else {
             $retorno = ['sucesso' => $sucesso, 'erros' => $erros];
         }
-
-        // Transforma o array em JSON
         echo json_encode($retorno);
     }
 }

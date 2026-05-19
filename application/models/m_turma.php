@@ -17,12 +17,12 @@ class M_turma extends CI_Model
     /**
      * Insere uma nova turma no banco de dados
      */
-    public function inserir($descricao, $capacidade, $dataInicio)
+    public function inserir($descricao, $capacidade, $dt_inicio)
     {
         try {
             // Query de inserção dos dados
-            $this->db->query("insert into turmas (descricao, capacidade, dataInicio) 
-                              values ('$descricao', $capacidade, '$dataInicio')");
+            $this->db->query("insert into turmas (descricao, capacidade, dt_inicio) 
+                              values ('$descricao', $capacidade, '$dt_inicio')");
 
             // Verificar se a inserção ocorreu com sucesso
             if ($this->db->affected_rows() > 0) {
@@ -50,13 +50,13 @@ class M_turma extends CI_Model
     /**
      * Consulta turmas de acordo com os parâmetros passados
      */
-    public function consultar($codigo, $descricao, $capacidade, $dataInicio)
+    public function consultar($codigo, $descricao, $capacidade, $dt_inicio)
     {
         try {
             // Query base para consultar dados
-            $sql = "select codigo, descricao, capacidade, dataInicio, 
-                    date_format(dataInicio, '%d-%m-%Y') dataIniciobra 
-                    from turmas where estatus = '' ";
+            $sql = "select codigo, descricao, capacidade, dt_inicio, 
+                    date_format(dt_inicio, '%d-%m-%Y') dt_iniciobra 
+                    from turmas where status = '' ";
 
             // Filtros dinâmicos
             if (trim($codigo) != '') {
@@ -71,8 +71,8 @@ class M_turma extends CI_Model
                 $sql = $sql . "and capacidade = $capacidade ";
             }
 
-            if (trim($dataInicio) != '') {
-                $sql = $sql . "and dataInicio = '$dataInicio' ";
+            if (trim($dt_inicio) != '') {
+                $sql = $sql . "and dt_inicio = '$dt_inicio' ";
             }
 
             $retorno = $this->db->query($sql);
@@ -104,7 +104,7 @@ class M_turma extends CI_Model
     /**
      * Altera os dados de uma turma existente
      */
-    public function alterar($codigo, $descricao, $capacidade, $dataInicio)
+    public function alterar($codigo, $descricao, $capacidade, $dt_inicio)
     {
         try {
             // Verifica se a turma já está cadastrada
@@ -121,8 +121,8 @@ class M_turma extends CI_Model
                 if ($capacidade !== '') {
                     $updates[] = "capacidade = $capacidade";
                 }
-                if ($dataInicio !== '') {
-                    $updates[] = "dataInicio = '$dataInicio'";
+                if ($dt_inicio !== '') {
+                    $updates[] = "dt_inicio = '$dt_inicio'";
                 }
 
                 $query .= implode(", ", $updates) . " WHERE codigo = $codigo ";
@@ -135,8 +135,8 @@ class M_turma extends CI_Model
                 if ($capacidade !== '') {
                     $params[] = $capacidade;
                 }
-                if ($dataInicio !== '') {
-                    $params[] = $dataInicio;
+                if ($dt_inicio !== '') {
+                    $params[] = $dt_inicio;
                 }
                 $params[] = $codigo;
 
@@ -185,7 +185,7 @@ class M_turma extends CI_Model
             // Verificar se a consulta ocorreu com sucesso
             if ($retornoTurma->num_rows() > 0) {
                 $linha = $retornoTurma->row();
-                if (trim($linha->estatus) == "D") {
+                if (trim($linha->status) == "D") {
                     $dados = array(
                         'codigo' => 9,
                         'msg'    => 'Turma desativada no sistema.'
@@ -225,7 +225,7 @@ class M_turma extends CI_Model
 
             if ($retornoConsulta['codigo'] == 10) {
                 // Query de atualização dos dados
-                $this->db->query("update turmas set estatus = 'D'
+                $this->db->query("update turmas set status = 'D'
                                   where codigo = $codigo");
 
                 // Verificar se a atualização ocorreu com sucesso

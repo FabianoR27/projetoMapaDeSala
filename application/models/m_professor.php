@@ -12,17 +12,27 @@ class M_professor extends CI_Model {
     10 - Professor já cadastrado / Consulta efetuada com sucesso (método privado)
     11 - Professor não encontrado pelo método público
     12 - Professor não encontrado
+    13 - CPF já cadastrado no sistema
     98 - Método auxiliar de consulta que não trouxe dados
     */
 
     /**
      * Insere um novo professor no banco de dados
      */
-    public function inserir($nome, $usuario) {
+    public function inserir($nome, $cpf, $tipo) {
         try {
-            // Query de inserção dos dados
-            $this->db->query("insert into professores (nome, usuario) 
-                              values ('$nome', '$usuario')");
+            // Verifica se o CPF já existe no banco antes de inserir
+            $checkCpf = $this->consultar('', '', $cpf, '');
+            if ($checkCpf['codigo'] == 1) {
+                return array(
+                    'codigo' => 13,
+                    'msg'    => 'O CPF informado já está cadastrado no sistema.'
+                );
+            }
+
+            // Query de inserção dos dados com Query Bindings para segurança
+            $sql = "INSERT INTO professores (nome, cpf, tipo) VALUES (?, ?, ?)";
+            $this->db->query($sql, array($nome, $cpf, $tipo));
 
             // Verificar se a inserção ocorreu com sucesso
             if ($this->db->affected_rows() > 0) {
@@ -50,23 +60,27 @@ class M_professor extends CI_Model {
     /**
      * Consulta professores de acordo com os parâmetros passados
      */
-    public function consultar($codigo, $nome, $usuario) {
+    public function consultar($codigo, $nome, $cpf, $tipo) {
         try {
             // Query base para consultar dados
-            $sql = "select codigo, nome, usuario 
-                    from professores where estatus = '' ";
+            $sql = "SELECT codigo, nome, cpf, tipo 
+                    FROM professores WHERE status = '' ";
 
             // Filtros dinâmicos
             if (trim($codigo) != '') {
-                $sql = $sql . "and codigo = $codigo ";
+                $sql .= "AND codigo = $codigo ";
             }
 
             if (trim($nome) != '') {
-                $sql = $sql . "and nome like '%$nome%' ";
+                $sql .= "AND nome LIKE '%$nome%' ";
             }
 
-            if (trim($usuario) != '') {
-                $sql = $sql . "and usuario like '%$usuario%' ";
+            if (trim($cpf) != '') {
+                $sql .= "AND cpf LIKE '%$cpf%' ";
+            }
+
+            if (trim($tipo) != '') {
+                $sql .= "AND tipo LIKE '%$tipo%' ";
             }
 
             $retorno = $this->db->query($sql);
@@ -98,13 +112,27 @@ class M_professor extends CI_Model {
     /**
      * Altera os dados de um professor existente
      */
-    public function alterar($codigo, $nome, $usuario)
+    public function alterar($codigo, $nome, $cpf, $tipo)
     {
         try {
             // Verifica se o professor já está cadastrado
-            $retornoConsulta = $this->consultaProfessorCod($codigo);
+            $retornoConsulta = $this->consultar($codigo, '', '', '');
 
-            if ($retornoConsulta['codigo'] == 10) {
+            // Ajustado para '1' pois é o retorno de sucesso do método consultar público
+            if ($retornoConsulta['codigo'] == 1) { 
+                
+                // Se o CPF estiver sendo alterado, verifica se não pertence a outro professor
+                if ($cpf !== '') {
+                    $checkCpf = $this->consultar('', '', $cpf, '');
+                    // Se achou o CPF, mas o código do professor dono do CPF for diferente do que está sendo editado
+                    if ($checkCpf['codigo'] == 1 && $checkCpf['dados'][0]->codigo != $codigo) {
+                        return array(
+                            'codigo' => 13,
+                            'msg'    => 'O CPF informado já está cadastrado para outro professor.'
+                        );
+                    }
+                }
+
                 // Monta a query dinâmica com Query Bindings (?) para segurança
                 $query = "UPDATE professores SET ";
                 $updates = [];
@@ -114,9 +142,13 @@ class M_professor extends CI_Model {
                     $updates[] = "nome = ?";
                     $params[] = $nome;
                 }
-                if ($usuario !== '') {
-                    $updates[] = "usuario = ?";
-                    $params[] = $usuario;
+                if ($cpf !== '') {
+                    $updates[] = "cpf = ?";
+                    $params[] = $cpf;
+                }
+                if ($tipo !== '') {
+                    $updates[] = "tipo = ?";
+                    $params[] = $tipo;
                 }
 
                 $query .= implode(", ", $updates) . " WHERE codigo = ?";
@@ -134,7 +166,7 @@ class M_professor extends CI_Model {
                 } else {
                     $dados = array(
                         'codigo' => 8,
-                        'msg'    => 'Houve algum problema na atualização na tabela de professor.'
+                        'msg'    => 'Nenhum dado foi alterado ou houve um problema na atualização.'
                     );
                 }
             } else {
@@ -154,59 +186,18 @@ class M_professor extends CI_Model {
     }
 
     /**
-     * Método privado para consultar se um professor existe e seu status
-     */
-    private function consultaProfessorCod($codigo)
-    {
-        try {
-            // Query para consultar dados de acordo com parâmetros passados
-            $sql = "select * from professores where codigo = $codigo ";
-
-            $retornoProfessor = $this->db->query($sql);
-
-            // Verificar se a consulta ocorreu com sucesso
-            if ($retornoProfessor->num_rows() > 0) {
-                $linha = $retornoProfessor->row();
-                if (trim($linha->estatus) == "D") {
-                    $dados = array(
-                        'codigo' => 9,
-                        'msg'    => 'Professor desativado no sistema.'
-                    );
-                } else {
-                    $dados = array(
-                        'codigo' => 10,
-                        'msg'    => 'Consulta efetuada com sucesso.'
-                    );
-                }
-            } else {
-                $dados = array(
-                    'codigo' => 12,
-                    'msg'    => 'Professor não encontrado.'
-                );
-            }
-        } catch (Exception $e) {
-            $dados = array(
-                'codigo' => 00,
-                'msg'    => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
-            );
-        }
-        
-        return $dados;
-    }
-
-    /**
      * Realiza a exclusão lógica (desativação) do professor
      */
     public function desativar($codigo)
     {
         try {
             // Verifica se o professor já está cadastrado
-            $retornoConsulta = $this->consultaProfessorCod($codigo);
+            $retornoConsulta = $this->consultar($codigo, '', '', '');
 
-            if ($retornoConsulta['codigo'] == 10) {
+            // Ajustado para '1' pois é o retorno de sucesso do método consultar público
+            if ($retornoConsulta['codigo'] == 1) { 
                 // Query de atualização dos dados
-                $this->db->query("update professores set estatus = 'D'
-                                  where codigo = $codigo");
+                $this->db->query("UPDATE professores SET status = 'D' WHERE codigo = $codigo");
 
                 // Verificar se a atualização ocorreu com sucesso
                 if ($this->db->affected_rows() > 0) {

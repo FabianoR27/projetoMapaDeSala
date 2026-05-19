@@ -1,7 +1,8 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-class M_usuario extends CI_Model {
+class M_usuario extends CI_Model
+{
     /*
     Validação dos tipos de retornos nas validações (Código de erro)
     0  - Erro de exceção
@@ -15,224 +16,246 @@ class M_usuario extends CI_Model {
     98 - Método auxiliar de consulta que não trouxe dados
     */
 
-    /**
-     * Insere um novo usuário no banco de dados
-     */
-    public function inserir($usuario, $senha, $tipoUsuario) {
+    public function inserir($nome, $email, $usuario, $senha)
+    {
         try {
-            // Criptografa a senha usando md5
-            $senhaMd5 = md5($senha);
+            // CHECAGEM DE DUPLICIDADE
+            $sqlCheck = "SELECT codigo FROM usuarios WHERE usuario = ? OR email = ?";
+            $queryCheck = $this->db->query($sqlCheck, [$usuario, $email]);
 
-            // Query de inserção dos dados
-            $this->db->query("insert into usuarios (usuario, senha, tipoUsuario) 
-                              values ('$usuario', '$senhaMd5', $tipoUsuario)");
-
-            // Verificar se a inserção ocorreu com sucesso
-            if ($this->db->affected_rows() > 0) {
-                $dados = array(
-                    'codigo' => 1,
-                    'msg'    => 'Usuário cadastrado corretamente.'
-                );
-            } else {
-                $dados = array(
-                    'codigo' => 8,
-                    'msg'    => 'Houve algum problema na inserção na tabela de usuário.'
-                );
+            if ($queryCheck->num_rows() > 0) {
+                // Código 10 - Usuário já cadastrado
+                return ['codigo' => 10, 'msg' => 'Usuário já cadastrado no sistema.'];
             }
 
-        } catch (Exception $e) {
-            $dados = array(
-                'codigo' => 0,
-                'msg'    => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
-            );
-        }
+            // INSERÇÃO
+            $senhaMd5 = md5($senha);
+            $sqlInsert = "INSERT INTO usuarios (nome, email, usuario, senha) VALUES (?, ?, ?, ?)";
+            $this->db->query($sqlInsert, [$nome, $email, $usuario, $senhaMd5]);
 
+            if ($this->db->affected_rows() > 0) {
+                // Código 1 - Operação realizada com sucesso
+                $dados = ['codigo' => 1, 'msg' => 'Operação realizada no banco de dados com sucesso (Inserção).'];
+            } else {
+                // Código 8 - Problema na inserção
+                $dados = ['codigo' => 8, 'msg' => 'Houve algum problema de inserção.'];
+            }
+        } catch (Exception $e) {
+            // Código 0 - Erro de exceção
+            $dados = ['codigo' => 0, 'msg' => 'Erro de exceção: ' . $e->getMessage()];
+        }
         return $dados;
     }
 
-    /**
-     * Consulta usuários de acordo com os parâmetros passados
-     */
-    public function consultar($codigo, $usuario, $tipoUsuario) {
+    public function consultar($codigo, $nome, $email, $usuario)
+    {
         try {
-            // Query base para consultar dados (não traz a senha por segurança)
-            $sql = "select codigo, usuario, tipoUsuario 
-                    from usuarios where estatus = '' ";
+            $sql = "SELECT codigo, nome, email, usuario FROM usuarios WHERE status = '' ";
 
-            // Filtros dinâmicos
             if (trim($codigo) != '') {
-                $sql = $sql . "and codigo = $codigo ";
+                $sql .= "AND codigo = $codigo ";
             }
-
             if (trim($usuario) != '') {
-                $sql = $sql . "and usuario like '%$usuario%' ";
+                $sql .= "AND usuario LIKE '%$usuario%' ";
             }
-
-            if (trim($tipoUsuario) != '') {
-                $sql = $sql . "and tipoUsuario = $tipoUsuario ";
+            if (trim($nome) != '') {
+                $sql .= "AND nome LIKE '%$nome%' ";
+            }
+            if (trim($email) != '') {
+                $sql .= "AND email LIKE '%$email%' ";
             }
 
             $retorno = $this->db->query($sql);
 
-            // Verificar se a consulta retornou resultados
             if ($retorno->num_rows() > 0) {
-                $dados = array(
-                    'codigo' => 1,
-                    'msg'    => 'Consulta efetuada com sucesso',
-                    'dados'  => $retorno->result()
-                );
+                // Código 1 - Operação realizada com sucesso
+                $dados = ['codigo' => 1, 'msg' => 'Operação realizada no banco de dados com sucesso (Consulta).', 'dados' => $retorno->result()];
             } else {
-                $dados = array(
-                    'codigo' => 11,
-                    'msg'    => 'Usuário não encontrado.'
-                );
+                // Código 11 - Usuário não encontrado pelo método público
+                $dados = ['codigo' => 11, 'msg' => 'Usuário não encontrado pelo método público.'];
             }
-
         } catch (Exception $e) {
-            $dados = array(
-                'codigo' => 0,
-                'msg'    => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
-            );
+            // Código 0 - Erro de exceção
+            $dados = ['codigo' => 0, 'msg' => 'Erro de exceção: ' . $e->getMessage()];
         }
-
         return $dados;
     }
 
-    /**
-     * Altera os dados de um usuário existente
-     */
-    public function alterar($codigo, $usuario, $senha, $tipoUsuario)
+    public function alterar($codigo, $nome, $email, $usuario, $senha)
     {
         try {
-            // Verifica se o usuário já está cadastrado
+            // Valida pelo método privado
             $retornoConsulta = $this->consultaUsuarioCod($codigo);
 
             if ($retornoConsulta['codigo'] == 10) {
-                // Monta a query dinâmica com Query Bindings (?) para segurança e compatibilidade
+
+                // CHECAGEM DE DUPLICIDADE NA ATUALIZAÇÃO (Ignora o próprio usuário)
+                if (trim($usuario) !== '' || trim($email) !== '') {
+                    $sqlCheck = "SELECT codigo FROM usuarios WHERE codigo != ? AND (";
+                    $condicoes = [];
+                    $paramsCheck = [$codigo];
+
+                    if (trim($usuario) !== '') {
+                        $condicoes[] = "usuario = ?";
+                        $paramsCheck[] = $usuario;
+                    }
+                    if (trim($email) !== '') {
+                        $condicoes[] = "email = ?";
+                        $paramsCheck[] = $email;
+                    }
+
+                    $sqlCheck .= implode(" OR ", $condicoes) . ")";
+                    $queryCheck = $this->db->query($sqlCheck, $paramsCheck);
+
+                    if ($queryCheck->num_rows() > 0) {
+                        // Código 10 - Usuário já cadastrado
+                        return ['codigo' => 10, 'msg' => 'Usuário já cadastrado (Este e-mail/usuário pertence a outra conta).'];
+                    }
+                }
+
+                // UPDATE
                 $query = "UPDATE usuarios SET ";
                 $updates = [];
                 $params = [];
 
-                if ($usuario !== '') {
+                if (trim($usuario) !== '') {
                     $updates[] = "usuario = ?";
                     $params[] = $usuario;
                 }
-                if ($senha !== '') {
-                    // Se a senha for alterada, aplica o MD5
+                if (trim($senha) !== '') {
                     $updates[] = "senha = ?";
                     $params[] = md5($senha);
                 }
-                if ($tipoUsuario !== '') {
-                    $updates[] = "tipoUsuario = ?";
-                    $params[] = $tipoUsuario;
+                if (trim($nome) !== '') {
+                    $updates[] = "nome = ?";
+                    $params[] = $nome;
+                }
+                if (trim($email) !== '') {
+                    $updates[] = "email = ?";
+                    $params[] = $email;
                 }
 
                 $query .= implode(", ", $updates) . " WHERE codigo = ?";
                 $params[] = $codigo;
 
-                // Executa a query passando o array de parâmetros
                 $this->db->query($query, $params);
 
-                // Verifica se a atualização foi bem-sucedida
                 if ($this->db->affected_rows() > 0) {
-                    $dados = array(
-                        'codigo' => 1,
-                        'msg'    => 'Usuário atualizado corretamente.'
-                    );
+                    // Código 1 - Operação realizada com sucesso
+                    $dados = ['codigo' => 1, 'msg' => 'Operação realizada no banco de dados com sucesso (Alteração).'];
                 } else {
-                    $dados = array(
-                        'codigo' => 8,
-                        'msg'    => 'Houve algum problema na atualização na tabela de usuário.'
-                    );
+                    // Código 8 - Problema na atualização
+                    $dados = ['codigo' => 8, 'msg' => 'Houve algum problema de atualização (ou nenhum dado foi alterado).'];
                 }
             } else {
-                $dados = array(
-                    'codigo' => 5,
-                    'msg'    => 'Usuário não cadastrado no sistema.'
-                );
+                // Mapeia o Erro 12 (do método privado) para o Erro 5, como manda a legenda
+                if ($retornoConsulta['codigo'] == 12) {
+                    // Código 5 - Usuário não cadastrado no sistema
+                    $dados = ['codigo' => 5, 'msg' => 'Usuário não cadastrado no sistema.'];
+                } else {
+                    // Propaga outros erros, como o Código 9 (Desativado)
+                    $dados = ['codigo' => $retornoConsulta['codigo'], 'msg' => $retornoConsulta['msg']];
+                }
             }
         } catch (Exception $e) {
-            $dados = array(
-                'codigo' => 00,
-                'msg'    => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
-            );
+            // Código 0 - Erro de exceção
+            $dados = ['codigo' => 0, 'msg' => 'Erro de exceção: ' . $e->getMessage()];
         }
-
         return $dados;
     }
 
-    /**
-     * Método privado para consultar se um usuário existe e seu status
-     */
     private function consultaUsuarioCod($codigo)
     {
         try {
-            // Query para consultar dados de acordo com parâmetros passados
-            $sql = "select * from usuarios where codigo = $codigo ";
-
+            $sql = "SELECT * FROM usuarios WHERE codigo = $codigo ";
             $retornoUsuario = $this->db->query($sql);
 
-            // Verificar se a consulta ocorreu com sucesso
             if ($retornoUsuario->num_rows() > 0) {
                 $linha = $retornoUsuario->row();
-                if (trim($linha->estatus) == "D") {
-                    $dados = array(
-                        'codigo' => 9,
-                        'msg'    => 'Usuário desativado no sistema.'
-                    );
+                if (trim($linha->status) == "D") {
+                    // Código 9 - Usuário desativado no sistema
+                    $dados = ['codigo' => 9, 'msg' => 'Usuário desativado no sistema.'];
                 } else {
-                    $dados = array(
-                        'codigo' => 10,
-                        'msg'    => 'Consulta efetuada com sucesso.'
-                    );
+                    // Código 10 - Consulta efetuada com sucesso (método privado)
+                    $dados = ['codigo' => 10, 'msg' => 'Consulta efetuada com sucesso (método privado).'];
                 }
             } else {
-                $dados = array(
-                    'codigo' => 12,
-                    'msg'    => 'Usuário não encontrado.'
-                );
+                // Código 12 - Usuário não encontrado
+                $dados = ['codigo' => 12, 'msg' => 'Usuário não encontrado.'];
             }
         } catch (Exception $e) {
-            $dados = array(
-                'codigo' => 00,
-                'msg'    => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
-            );
+            // Código 0 - Erro de exceção
+            $dados = ['codigo' => 0, 'msg' => 'Erro de exceção: ' . $e->getMessage()];
         }
-        
+        return $dados;
+    }
+
+    public function desativar($codigo)
+    {
+        try {
+            // Valida pelo método privado
+            $retornoConsulta = $this->consultaUsuarioCod($codigo);
+
+            if ($retornoConsulta['codigo'] == 10) {
+                $this->db->query("UPDATE usuarios SET status = 'D' WHERE codigo = $codigo");
+
+                if ($this->db->affected_rows() > 0) {
+                    // Código 1 - Operação realizada com sucesso
+                    $dados = ['codigo' => 1, 'msg' => 'Usuário desativado com sucesso.'];
+                } else {
+                    // Código 8 - Problema na exclusão
+                    $dados = ['codigo' => 8, 'msg' => 'Houve algum problema de exclusão.'];
+                }
+            } else {
+                // Mapeia o Erro 12 para o Erro 5, igual no alterar()
+                if ($retornoConsulta['codigo'] == 12) {
+                    // Código 5 - Usuário não cadastrado no sistema
+                    $dados = ['codigo' => 5, 'msg' => 'Usuário não cadastrado no sistema.'];
+                } else {
+                    $dados = ['codigo' => $retornoConsulta['codigo'], 'msg' => $retornoConsulta['msg']];
+                }
+            }
+        } catch (Exception $e) {
+            // Código 0 - Erro de exceção
+            $dados = ['codigo' => 0, 'msg' => 'Erro de exceção: ' . $e->getMessage()];
+        }
         return $dados;
     }
 
     /**
-     * Realiza a exclusão lógica (desativação) do usuário
+     * Valida o login do usuário (Transcrito da imagem e adaptado)
      */
-    public function desativar($codigo)
-    {
+    public function validaLogin($usuario, $senha) {
         try {
-            // Verifica se o usuário já está cadastrado
-            $retornoConsulta = $this->consultaUsuarioCod($codigo);
+            // Criptografa a senha para comparar com o banco
+            $senhaMd5 = md5($senha);
 
-            if ($retornoConsulta['codigo'] == 10) {
-                // Query de atualização dos dados
-                $this->db->query("update usuarios set estatus = 'D'
-                                  where codigo = $codigo");
+            // Atributo retorno recebe o resultado do SELECT
+            $sql = "SELECT * FROM usuarios WHERE usuario = ? AND senha = ?";
+            $retorno = $this->db->query($sql, [$usuario, $senhaMd5]);
 
-                // Verificar se a atualização ocorreu com sucesso
-                if ($this->db->affected_rows() > 0) {
+            // Verifica se a quantidade de linhas trazidas na consulta é 0
+            if ($retorno->num_rows() == 0) {
+                $dados = array(
+                    'codigo' => 4,
+                    'msg'    => 'Usuário ou senha inválidos.'
+                );
+            } else {
+                // Vinculamos o resultado da query para tratarmos o resultado do status
+                $linha = $retorno->row();
+                
+                if (trim($linha->status) == "D") {
                     $dados = array(
-                        'codigo' => 1,
-                        'msg'    => 'Usuário DESATIVADO corretamente.'
+                        'codigo' => 5,
+                        'msg'    => 'Usuário DESATIVADO NA BASE DE DADOS!'
                     );
                 } else {
                     $dados = array(
-                        'codigo' => 8,
-                        'msg'    => 'Houve algum problema na DESATIVAÇÃO do usuário.'
+                        'codigo' => 1,
+                        'msg'    => 'Usuário correto',
+                        'dados'  => $linha
                     );
                 }
-            } else {
-                $dados = array(
-                    'codigo' => $retornoConsulta['codigo'],
-                    'msg'    => $retornoConsulta['msg']
-                );
             }
         } catch (Exception $e) {
             $dados = array(
@@ -240,7 +263,48 @@ class M_usuario extends CI_Model {
                 'msg'    => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
             );
         }
-        
+
+        return $dados;
+    }
+
+    /**
+     * Valida se o usuário existe e está ativo (Transcrito da imagem e adaptado)
+     */
+    public function validaUsuario($usuario) {
+        try {
+            // Atributo retorno recebe o resultado do SELECT
+            $sql = "SELECT * FROM usuarios WHERE usuario = ?";
+            $retorno = $this->db->query($sql, [$usuario]);
+
+            // Verifica se a quantidade de linhas trazidas na consulta é 0
+            if ($retorno->num_rows() == 0) {
+                $dados = array(
+                    'codigo' => 4,
+                    'msg'    => 'Usuário ou senha inválidos.'
+                );
+            } else {
+                // Vinculamos o resultado da query para tratarmos o resultado do status
+                $linha = $retorno->row();
+                
+                if (trim($linha->status) == "D") {
+                    $dados = array(
+                        'codigo' => 5,
+                        'msg'    => 'Usuário DESATIVADO NA BASE DE DADOS, não pode ser utilizado!'
+                    );
+                } else {
+                    $dados = array(
+                        'codigo' => 1,
+                        'msg'    => 'Usuário correto'
+                    );
+                }
+            }
+        } catch (Exception $e) {
+            $dados = array(
+                'codigo' => 00,
+                'msg'    => 'ATENÇÃO: O seguinte erro aconteceu -> ' . $e->getMessage()
+            );
+        }
+
         return $dados;
     }
 }

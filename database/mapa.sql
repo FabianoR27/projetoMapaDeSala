@@ -72,4 +72,3 @@ CREATE TABLE IF NOT EXISTS mapas(
 );
 
 select * from salas;
-

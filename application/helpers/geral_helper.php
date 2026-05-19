@@ -105,7 +105,7 @@ function validarDadosConsulta($valor, $tipo) {
                     return array('codigoHelper' => 5, 'msg' => 'Conteúdo não é um texto.');
                 }
                 break;
-            case 'date':
+            case 'DATE':
                 // Verifico se tem padrão de data
                 if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $match)) {
                     return array('codigoHelper' => 6, 'msg' => 'Data em formato inválido.');

@@ -93,9 +93,9 @@ class Turma extends CI_Controller {
                 // Validar campos quanto ao tipo e tamanho (Helper)
                 $retornoDescricao  = validarDados($resultado->descricao, 'string', true);
                 $retornoCapacidade = validarDados($resultado->capacidade, 'int', true);
-                $retornoDataInicio = validarDados($resultado->dataInicio, 'date', true);
+                $retornoDataInicio = validarDados($resultado->dataInicio, 'DATE', true);
 
-                if ($retornoDescricao['codigoHelper'] != 0) {
+                if ($retornoDescricao['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoDescricao['codigoHelper'],
                         'campo'  => 'Descrição',
@@ -103,7 +103,7 @@ class Turma extends CI_Controller {
                     ];
                 }
 
-                if ($retornoCapacidade['codigoHelper'] != 0) {
+                if ($retornoCapacidade['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoCapacidade['codigoHelper'],
                         'campo'  => 'Capacidade',
@@ -114,7 +114,7 @@ class Turma extends CI_Controller {
                 if ($retornoDataInicio['codigoHelper'] != 0) {
                     $erros[] = [
                         'codigo' => $retornoDataInicio['codigoHelper'],
-                        'campo'  => 'Andar',
+                        'campo'  => 'Data Inicio',
                         'msg'    => $retornoDataInicio['msg']
                     ];
                 }
@@ -125,8 +125,8 @@ class Turma extends CI_Controller {
                     $this->setCapacidade($resultado->capacidade);
                     $this->setDataInicio($resultado->dataInicio);
 
-                    $this->load->model('M_turma');
-                    $resBanco = $this->M_turma->inserir(
+                    $this->load->model('m_turma');
+                    $resBanco = $this->m_turma->inserir(
                         $this->getDescricao(),
                         $this->getCapacidade(),
                         $this->getDataInicio()
@@ -281,14 +281,14 @@ class Turma extends CI_Controller {
                     $retornoDataInicio = validarDadosConsulta($resultado->dataInicio, 'date');
 
                     // Verificação de erros dos retornos do Helper
-                    if ($retornoCodigo['codigoHelper'] != 0) {
+                    if ($retornoCodigo['codigoHelper'] != 1) {
                         $erros[] = ['codigo' => $retornoCodigo['codigoHelper'], 'campo' => 'Codigo', 'msg' => $retornoCodigo['msg']];
                     }
                     if ($retornoDescricao['codigoHelper'] != 0) {
                         $erros[] = ['codigo' => $retornoDescricao['codigoHelper'], 'campo' => 'Descrição', 'msg' => $retornoDescricao['msg']];
                     }
                     if ($retornoCapacidade['codigoHelper'] != 0) {
-                        $erros[] = ['codigo' => $retornoCapacidade['codigoHelper'], 'campo' => 'Andar', 'msg' => $retornoCapacidade['msg']];
+                        $erros[] = ['codigo' => $retornoCapacidade['codigoHelper'], 'campo' => 'Capacidade', 'msg' => $retornoCapacidade['msg']];
                     }
                     if ($retornoDataInicio['codigoHelper'] != 0) {
                         $erros[] = ['codigo' => $retornoDataInicio['codigoHelper'], 'campo' => 'Data Inicio', 'msg' => $retornoDataInicio['msg']];
@@ -360,7 +360,7 @@ class Turma extends CI_Controller {
                 // Validar código quanto ao tipo de dado e tamanho (Helper)
                 $retornoCodigo = validarDados($resultado->codigo, 'int', true);
 
-                if ($retornoCodigo['codigoHelper'] != 0) {
+                if ($retornoCodigo['codigoHelper'] != 1) {
                     $erros[] = [
                         'codigo' => $retornoCodigo['codigoHelper'],
                         'campo'  => 'Codigo',
